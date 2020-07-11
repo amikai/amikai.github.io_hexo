@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://amikai.github.io/"/>
-  <updated>2020-07-11T13:59:08.229Z</updated>
+  <updated>2020-07-11T13:45:15.781Z</updated>
   <id>https://amikai.github.io/</id>
   
   <author>
@@ -15,29 +15,6 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
-  
-  <entry>
-    <title>fib_practice</title>
-    <link href="https://amikai.github.io/2020/07/11/fib-practice/"/>
-    <id>https://amikai.github.io/2020/07/11/fib-practice/</id>
-    <published>2020-07-11T13:52:53.000Z</published>
-    <updated>2020-07-11T13:59:08.229Z</updated>
-    
-    <summary type="html">
-    
-      
-      
-        
-        
-          &lt;p&gt;$$\begin{align}&lt;br&gt;a &amp;amp;= b + c \label{eq3} \&lt;br&gt;x &amp;amp;= yz \label{eq4}\&lt;br&gt;l &amp;amp;= m - n
-        
-      
-    
-    </summary>
-    
-    
-    
-  </entry>
   
   <entry>
     <title>Golang 78 語法篇 - method set</title>

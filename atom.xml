@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://amikai.github.io/"/>
-  <updated>2020-09-03T15:36:35.050Z</updated>
+  <updated>2020-09-03T15:51:21.543Z</updated>
   <id>https://amikai.github.io/</id>
   
   <author>
@@ -21,7 +21,7 @@
     <link href="https://amikai.github.io/2020/09/03/go-neovim-env/"/>
     <id>https://amikai.github.io/2020/09/03/go-neovim-env/</id>
     <published>2020-09-03T02:48:54.000Z</published>
-    <updated>2020-09-03T15:36:35.050Z</updated>
+    <updated>2020-09-03T15:51:21.543Z</updated>
     
     <summary type="html">
     
@@ -39,6 +39,8 @@
     
     
     
+      <category term="vimrc" scheme="https://amikai.github.io/tags/vimrc/"/>
+    
   </entry>
   
   <entry>
@@ -46,7 +48,7 @@
     <link href="https://amikai.github.io/2020/07/07/golang78syntax2/"/>
     <id>https://amikai.github.io/2020/07/07/golang78syntax2/</id>
     <published>2020-07-07T05:42:50.000Z</published>
-    <updated>2020-07-11T22:35:12.781Z</updated>
+    <updated>2020-09-03T15:51:35.967Z</updated>
     
     <summary type="html">
     

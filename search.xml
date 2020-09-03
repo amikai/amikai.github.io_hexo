@@ -122,6 +122,9 @@
 <li><a href="https://github.com/fatih/vim-go-tutorial" target="_blank" rel="noopener">https://github.com/fatih/vim-go-tutorial</a></li>
 </ul>
 ]]></content>
+      <tags>
+        <tag>vimrc</tag>
+      </tags>
   </entry>
   <entry>
     <title>Golang 78 語法篇 - interface</title>

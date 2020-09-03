@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://amikai.github.io/"/>
-  <updated>2020-07-11T22:35:12.781Z</updated>
+  <updated>2020-09-03T14:31:07.755Z</updated>
   <id>https://amikai.github.io/</id>
   
   <author>
@@ -15,6 +15,31 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Golang 語言開發環境 - 使用 neovim</title>
+    <link href="https://amikai.github.io/2020/09/03/go-neovim-env/"/>
+    <id>https://amikai.github.io/2020/09/03/go-neovim-env/</id>
+    <published>2020-09-03T02:48:54.000Z</published>
+    <updated>2020-09-03T14:31:07.755Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;img data-src=&quot;/2020/09/03/go-neovim-env/cover.png&quot; class=&quot;&quot;&gt;
+
+&lt;h1 id=&quot;你確定要用-neovim-開發-golang&quot;&gt;&lt;a href=&quot;#你確定要用-neovim-開發-golang&quot;
+        
+      
+    
+    </summary>
+    
+    
+    
+  </entry>
   
   <entry>
     <title>Golang 78 語法篇 - method set</title>

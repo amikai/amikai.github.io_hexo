@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://amikai.github.io/"/>
-  <updated>2020-09-03T15:51:21.543Z</updated>
+  <updated>2020-09-03T16:09:42.633Z</updated>
   <id>https://amikai.github.io/</id>
   
   <author>
@@ -18,10 +18,10 @@
   
   <entry>
     <title>Golang 開發環境 - 使用 neovim</title>
-    <link href="https://amikai.github.io/2020/09/03/go-neovim-env/"/>
-    <id>https://amikai.github.io/2020/09/03/go-neovim-env/</id>
+    <link href="https://amikai.github.io/2020/09/03/go_neovim_env/"/>
+    <id>https://amikai.github.io/2020/09/03/go_neovim_env/</id>
     <published>2020-09-03T02:48:54.000Z</published>
-    <updated>2020-09-03T15:51:21.543Z</updated>
+    <updated>2020-09-03T16:09:42.633Z</updated>
     
     <summary type="html">
     
@@ -29,7 +29,7 @@
       
         
         
-          &lt;img data-src=&quot;/2020/09/03/go-neovim-env/cover.png&quot; class=&quot;&quot;&gt;
+          &lt;img data-src=&quot;/2020/09/03/go_neovim_env/cover.png&quot; class=&quot;&quot;&gt;
 
 &lt;h1 id=&quot;你確定要用-neovim-開發-golang&quot;&gt;&lt;a href=&quot;#你確定要用-neovim-開發-golang&quot;
         

@@ -19,7 +19,7 @@
 <p>Nice to have</p>
 <ul>
 <li>你知道 <code>:checkhealth</code> 和 <code>:UpdateRemotePlugin</code></li>
-<li>你收悉 <code>:help</code> 的使用方式，這裡有一篇好文：<a href="https://vim.fandom.com/wiki/Learn_to_use_help" target="_blank" rel="noopener">Learn to use help</a></li>
+<li>你熟悉 <code>:help</code> 的使用方式，這裡有一篇好文：<a href="https://vim.fandom.com/wiki/Learn_to_use_help" target="_blank" rel="noopener">Learn to use help</a></li>
 </ul>
 <h1 id="開發環境基本功能"><a href="#開發環境基本功能" class="headerlink" title="開發環境基本功能"></a>開發環境基本功能</h1><p>一個好用的 Editor 我認為應該包含以下幾點基本功能:</p>
 <ul>

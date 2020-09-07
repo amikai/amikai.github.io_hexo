@@ -168,11 +168,46 @@
       </tags>
   </entry>
   <entry>
+    <title>Golang 78 語法篇 - method set</title>
+    <url>/2020/07/07/golang78syntax2/</url>
+    <content><![CDATA[<p><code>method set</code>, <code>interface</code>, <code>auto deference or reference</code> 當這些語法綜合再一起使用時，很容易混淆，甚至寫出 bug code，這章我們就透過題目探討一下 <code>method set</code> 常常被大家誤會的地方。</p>
+<p><a href="golang78syntax.md">Golang 78 語法篇 - interface</a>  <code>Line 50</code> 的概念就在這篇。</p>
+<h1 id="題目"><a href="#題目" class="headerlink" title="題目"></a>題目</h1><p>請問以下程式輸出結果為何</p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	(&amp;Employee&#123;&#125;).DoWork()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>答案只有兩種方向:<br>    1. 無法編譯<br>    2. 印出 do work</p>
+<p>這個程式可以編譯，並且還印出 do work 但是為什麼呢？</p>
+ <a id="more"></a>
+
+<h1 id="Method-set"><a href="#Method-set" class="headerlink" title="Method set"></a>Method set</h1><p>在 receiver argument 和 receiver parameter 不一樣的情況下，直覺反應就是 <code>implicit dereference</code> 和 <code>implicit reference</code> 在背後會幫忙，但是這個寫法 (struct literal) 是不會有此情況的。</p>
+<p>既然沒有 <code>implicit dereference</code> 和 <code>implicit reference</code> 的支援，那一定存在其它機制使得這段 code 能正常編譯。</p>
+<p>以下從 <a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">Golang Specification</a>所截取的句子:</p>
+<p>The method set of the corresponding pointer type *T is the set of all methods declared with receiver *T or T (that is, it also contains the method set of T)</p>
+<p>以下是從 <a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang FAQ</a> 所截取的句子:</p>
+<p>As the Go specification says, the method set of a type T consists of all methods with receiver type T, while that of the corresponding pointer type *T consists of all methods with receiver *T or T. That means the method set of *T includes that of T, but not the reverse</p>
+<p>其實意思就是型態 T 的所有 method 包含了所有 receiver 型態是 T 的 method，這理所當然，看起來也像廢話，另一句才是關鍵，也是今日的重點：*T 型態的所有 method 包含了 receiver 型態是 T 及 *T 的 method。</p>
+<p>有了此結論我們就能知道 <code>*Employee</code> 的 method set 裡是有 <code>DoWork()</code>，所以編譯會過。</p>
+<p>那這就有趣了，再看一個延伸題，請問這段 code 編譯會不會過:</p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Worker <span class="keyword">interface</span> &#123;</span><br><span class="line">	DoWork()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> w Worker = &amp;Employee&#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>這段 code 問的其實就是 Employee 到底有沒有符合(satisfy) <code>Worker</code> 介面，根據剛剛所得出的結論， <code>*Employee</code> 的 method set 裡是有包含 <code>DoWork</code> 的，所以編譯是會過的。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
+<li><a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang Frequently Asked Questions (FAQ)</a></li>
+<li><a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">The Go Programming Language Specification - Method sets</a></li>
+</ol>
+]]></content>
+      <categories>
+        <category>golang78 syntax series</category>
+      </categories>
+      <tags>
+        <tag>golang</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>聊聊 vim mark 使用情境 - code 參照</title>
     <url>/2020/09/07/vim-mark-tips/</url>
     <content><![CDATA[<img data-src="/2020/09/07/vim-mark-tips/cover.png" class="">
 <p>寫程式的時候常常遇到一種情況，假設你是團隊的新人，需要常常參照別人的程式，看看團隊的 coding style 等等，可能需要參照 A file 的第 10 行，B file 第 8 行，C file 第 999 行。</p>
-<p>另一種情境則是在寫測試的時候會和實作交互參照，而測試往往實作程式會拆開不同的檔案，所以就必須要一直跳轉。</p>
+<p>另一種情境則是在寫測試的時候會和實作交互參照，而測試程式往往和實作程式會拆開不同的檔案，所以就必須要一直跳轉。</p>
 <p>使用 split 的方式縱然是一個不錯的方式，但是如果要參照的點大於三個，就將螢幕切成三份，那工程師就相當痛苦了，不是每個人都用這種電腦螢幕啊。這種 split 的方式還有另一個缺點：如果手殘將檔案關掉，就得重找。</p>
 <img data-src="/2020/09/07/vim-mark-tips/cj890.jpg" class="">
 
@@ -214,41 +249,6 @@
 ]]></content>
       <tags>
         <tag>vim</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Golang 78 語法篇 - method set</title>
-    <url>/2020/07/07/golang78syntax2/</url>
-    <content><![CDATA[<p><code>method set</code>, <code>interface</code>, <code>auto deference or reference</code> 當這些語法綜合再一起使用時，很容易混淆，甚至寫出 bug code，這章我們就透過題目探討一下 <code>method set</code> 常常被大家誤會的地方。</p>
-<p><a href="golang78syntax.md">Golang 78 語法篇 - interface</a>  <code>Line 50</code> 的概念就在這篇。</p>
-<h1 id="題目"><a href="#題目" class="headerlink" title="題目"></a>題目</h1><p>請問以下程式輸出結果為何</p>
-<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	(&amp;Employee&#123;&#125;).DoWork()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>答案只有兩種方向:<br>    1. 無法編譯<br>    2. 印出 do work</p>
-<p>這個程式可以編譯，並且還印出 do work 但是為什麼呢？</p>
- <a id="more"></a>
-
-<h1 id="Method-set"><a href="#Method-set" class="headerlink" title="Method set"></a>Method set</h1><p>在 receiver argument 和 receiver parameter 不一樣的情況下，直覺反應就是 <code>implicit dereference</code> 和 <code>implicit reference</code> 在背後會幫忙，但是這個寫法 (struct literal) 是不會有此情況的。</p>
-<p>既然沒有 <code>implicit dereference</code> 和 <code>implicit reference</code> 的支援，那一定存在其它機制使得這段 code 能正常編譯。</p>
-<p>以下從 <a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">Golang Specification</a>所截取的句子:</p>
-<p>The method set of the corresponding pointer type *T is the set of all methods declared with receiver *T or T (that is, it also contains the method set of T)</p>
-<p>以下是從 <a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang FAQ</a> 所截取的句子:</p>
-<p>As the Go specification says, the method set of a type T consists of all methods with receiver type T, while that of the corresponding pointer type *T consists of all methods with receiver *T or T. That means the method set of *T includes that of T, but not the reverse</p>
-<p>其實意思就是型態 T 的所有 method 包含了所有 receiver 型態是 T 的 method，這理所當然，看起來也像廢話，另一句才是關鍵，也是今日的重點：*T 型態的所有 method 包含了 receiver 型態是 T 及 *T 的 method。</p>
-<p>有了此結論我們就能知道 <code>*Employee</code> 的 method set 裡是有 <code>DoWork()</code>，所以編譯會過。</p>
-<p>那這就有趣了，再看一個延伸題，請問這段 code 編譯會不會過:</p>
-<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Worker <span class="keyword">interface</span> &#123;</span><br><span class="line">	DoWork()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> w Worker = &amp;Employee&#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>這段 code 問的其實就是 Employee 到底有沒有符合(satisfy) <code>Worker</code> 介面，根據剛剛所得出的結論， <code>*Employee</code> 的 method set 裡是有包含 <code>DoWork</code> 的，所以編譯是會過的。</p>
-<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
-<li><a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang Frequently Asked Questions (FAQ)</a></li>
-<li><a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">The Go Programming Language Specification - Method sets</a></li>
-</ol>
-]]></content>
-      <categories>
-        <category>golang78 syntax series</category>
-      </categories>
-      <tags>
-        <tag>golang</tag>
       </tags>
   </entry>
 </search>

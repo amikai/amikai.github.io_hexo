@@ -31,6 +31,8 @@
 </ul>
 <p>以下我將會介紹我使用的 Plugin，達到我上述所提到的功能。<br>以下使用的皆是 Neovim nightly 版本，使用 stable 是沒有官方 LSP 支援的。</p>
 <p>Note：neovim 是由 vim 所 fork 出來的，差異介紹請看<a href="https://kerol2r20.github.io/post/2017-10-29-neovim-introdunction/" target="_blank" rel="noopener">這篇</a>，某些 Plugin 不會同時相容於兩者，我接會標明。</p>
+ <a id="more"></a>
+
 <h1 id="File-explorer-defx-nvim"><a href="#File-explorer-defx-nvim" class="headerlink" title="File explorer (defx.nvim)"></a>File explorer (defx.nvim)</h1><img data-src="/2020/09/03/go_neovim_env/defx.png" class="">
 
 <p>為什麼不用老牌的 nerdtree 就好，要使用別的 file explorer，<br>沒辦法 nerdtree 就是慢，只要專案稍微有一點規模，就會有明顯的卡頓。</p>
@@ -123,7 +125,8 @@
 </ul>
 ]]></content>
       <tags>
-        <tag>vimrc</tag>
+        <tag>vim</tag>
+        <tag>neovim</tag>
       </tags>
   </entry>
   <entry>
@@ -211,6 +214,8 @@
 <p>使用 split 的方式縱然是一個不錯的方式，但是如果要參照的點大於三個，就將螢幕切成三份，那工程師就相當痛苦了，不是每個人都用這種電腦螢幕啊。這種 split 的方式還有另一個缺點：如果手殘將檔案關掉，就得重找。</p>
 <img data-src="/2020/09/07/vim-mark-tips/cj890.jpg" class="">
 
+ <a id="more"></a>
+
 <h1 id="Mark"><a href="#Mark" class="headerlink" title="Mark"></a>Mark</h1><p>vim 的 mark 取名或許源自於 bookmark (書籤) 這個字，書籤的用意在於能快速找回你上次看的那一頁，而 vim mark 的用意也是如此：能快速找回你剛剛在看 code 的地方。</p>
 <p>vim 的 mark 分為三種：</p>
 <ul>
@@ -249,6 +254,7 @@
 ]]></content>
       <tags>
         <tag>vim</tag>
+        <tag>neovim</tag>
       </tags>
   </entry>
 </search>

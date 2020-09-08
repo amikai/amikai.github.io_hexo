@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://amikai.github.io/"/>
-  <updated>2020-09-07T09:16:14.156Z</updated>
+  <updated>2020-09-08T10:58:54.951Z</updated>
   <id>https://amikai.github.io/</id>
   
   <author>
@@ -21,24 +21,23 @@
     <link href="https://amikai.github.io/2020/09/07/vim-mark-tips/"/>
     <id>https://amikai.github.io/2020/09/07/vim-mark-tips/</id>
     <published>2020-09-07T07:03:01.000Z</published>
-    <updated>2020-09-07T09:16:14.156Z</updated>
+    <updated>2020-09-08T10:58:54.951Z</updated>
     
     <summary type="html">
     
-      
-      
-        
-        
-          &lt;img data-src=&quot;/2020/09/07/vim-mark-tips/cover.png&quot; class=&quot;&quot;&gt;
-&lt;p&gt;寫程式的時候常常遇到一種情況，假設你是團隊的新人，需要常常參照別人的程式，看看團隊的 coding style 等等，可能需要參照 A file
-        
-      
+      &lt;img data-src=&quot;/2020/09/07/vim-mark-tips/cover.png&quot; class=&quot;&quot;&gt;
+&lt;p&gt;寫程式的時候常常遇到一種情況，假設你是團隊的新人，需要常常參照別人的程式，看看團隊的 coding style 等等，可能需要參照 A file 的第 10 行，B file 第 8 行，C file 第 999 行。&lt;/p&gt;
+&lt;p&gt;另一種情境則是在寫測試的時候會和實作交互參照，而測試程式往往和實作程式會拆開不同的檔案，所以就必須要一直跳轉。&lt;/p&gt;
+&lt;p&gt;使用 split 的方式縱然是一個不錯的方式，但是如果要參照的點大於三個，就將螢幕切成三份，那工程師就相當痛苦了，不是每個人都用這種電腦螢幕啊。這種 split 的方式還有另一個缺點：如果手殘將檔案關掉，就得重找。&lt;/p&gt;
+&lt;img data-src=&quot;/2020/09/07/vim-mark-tips/cj890.jpg&quot; class=&quot;&quot;&gt;
     
     </summary>
     
     
     
       <category term="vim" scheme="https://amikai.github.io/tags/vim/"/>
+    
+      <category term="neovim" scheme="https://amikai.github.io/tags/neovim/"/>
     
   </entry>
   
@@ -47,25 +46,46 @@
     <link href="https://amikai.github.io/2020/09/03/go_neovim_env/"/>
     <id>https://amikai.github.io/2020/09/03/go_neovim_env/</id>
     <published>2020-09-03T02:48:54.000Z</published>
-    <updated>2020-09-04T15:57:13.574Z</updated>
+    <updated>2020-09-08T10:58:08.758Z</updated>
     
     <summary type="html">
     
-      
-      
-        
-        
-          &lt;img data-src=&quot;/2020/09/03/go_neovim_env/cover.png&quot; class=&quot;&quot;&gt;
+      &lt;img data-src=&quot;/2020/09/03/go_neovim_env/cover.png&quot; class=&quot;&quot;&gt;
 
-&lt;h1 id=&quot;你確定要用-neovim-開發-golang&quot;&gt;&lt;a href=&quot;#你確定要用-neovim-開發-golang&quot;
-        
-      
+&lt;h1 id=&quot;你確定要用-neovim-開發-golang&quot;&gt;&lt;a href=&quot;#你確定要用-neovim-開發-golang&quot; class=&quot;headerlink&quot; title=&quot;你確定要用 neovim 開發 golang?&quot;&gt;&lt;/a&gt;你確定要用 neovim 開發 golang?&lt;/h1&gt;&lt;p&gt;現在是 vscode 稱霸天下的時代，理所當然的 (neo)vim 也常常被拿來 vscode 比較，vscode 內建整合了 git、debugger、自動補全引擎、terminal、extension manager，另外 Golang 在 vscode 上的 extension 支援相當良好: 包括跳轉到定義 (go to definition)、重新命名 (rename)、跳轉到型態定義 (go to type definition)⋯⋯ 一堆細節功能，近期由於 google golang team 接手 go 語言的 vscode extension，相信使用 vscode 開發是不錯的選擇。&lt;/p&gt;
+&lt;p&gt; (neo)vim 當然也能達到 vscode 的類似功能，但是必須花時間設定調教，在 vscode 問世之前我會推薦 (Neo)vim 給我的朋友，vscode 問世之後我就開始推薦 vscode。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;本文給那些本來就在 (neo)vim 裡打滾的人，但對 go 語言設定不熟的人，&lt;br&gt;如果你是一張白紙，而且沒有被虐的癖好，我建議選擇 vscode，可以用較少的時間進入到寫程式的環節，而不是一直在花時間在設定，這篇文你也沒必要看下去。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h1 id=&quot;預備動作&quot;&gt;&lt;a href=&quot;#預備動作&quot; class=&quot;headerlink&quot; title=&quot;預備動作&quot;&gt;&lt;/a&gt;預備動作&lt;/h1&gt;&lt;p&gt;Must have&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;你應該先安裝好 neovim nightly 版本，&lt;code&gt;brew install neovim --HEAD&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;你應該要知道怎麼使用 vim-plug，至少要知道 &lt;code&gt;:PlugInstall&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;你應該先把 go 語言環境安裝好&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Nice to have&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;你知道 &lt;code&gt;:checkhealth&lt;/code&gt; 和 &lt;code&gt;:UpdateRemotePlugin&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;你熟悉 &lt;code&gt;:help&lt;/code&gt; 的使用方式，這裡有一篇好文：&lt;a href=&quot;https://vim.fandom.com/wiki/Learn_to_use_help&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Learn to use help&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h1 id=&quot;開發環境基本功能&quot;&gt;&lt;a href=&quot;#開發環境基本功能&quot; class=&quot;headerlink&quot; title=&quot;開發環境基本功能&quot;&gt;&lt;/a&gt;開發環境基本功能&lt;/h1&gt;&lt;p&gt;一個好用的 Editor 我認為應該包含以下幾點基本功能:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Auto completion - 好的自動補全引擎&lt;/li&gt;
+&lt;li&gt;File manager - 可以在側邊欄看到專案的結構&lt;/li&gt;
+&lt;li&gt;Real time linter - 在寫 code 犯錯的同時，有一些提示 (也就是 diagnostic 功能)&lt;/li&gt;
+&lt;li&gt;Background compile - 編譯的同時不應該卡住整個 Editor，要讓使用者能做其他事情&lt;/li&gt;
+&lt;li&gt;Code navigation: 包含跳轉到定義，跳轉到型態定義，或是當一個檔案寫得很長的時候，怎麼綜觀全局&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;以下我將會介紹我使用的 Plugin，達到我上述所提到的功能。&lt;br&gt;以下使用的皆是 Neovim nightly 版本，使用 stable 是沒有官方 LSP 支援的。&lt;/p&gt;
+&lt;p&gt;Note：neovim 是由 vim 所 fork 出來的，差異介紹請看&lt;a href=&quot;https://kerol2r20.github.io/post/2017-10-29-neovim-introdunction/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;這篇&lt;/a&gt;，某些 Plugin 不會同時相容於兩者，我接會標明。&lt;/p&gt;
     
     </summary>
     
     
     
-      <category term="vimrc" scheme="https://amikai.github.io/tags/vimrc/"/>
+      <category term="vim" scheme="https://amikai.github.io/tags/vim/"/>
+    
+      <category term="neovim" scheme="https://amikai.github.io/tags/neovim/"/>
     
   </entry>
   

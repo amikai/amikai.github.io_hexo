@@ -94,12 +94,14 @@
     <link href="https://amikai.github.io/2020/07/07/golang78syntax2/"/>
     <id>https://amikai.github.io/2020/07/07/golang78syntax2/</id>
     <published>2020-07-07T05:42:50.000Z</published>
-    <updated>2020-09-03T15:51:35.967Z</updated>
+    <updated>2020-09-09T06:20:20.118Z</updated>
     
     <summary type="html">
     
       &lt;p&gt;&lt;code&gt;method set&lt;/code&gt;, &lt;code&gt;interface&lt;/code&gt;, &lt;code&gt;auto deference or reference&lt;/code&gt; 當這些語法綜合再一起使用時，很容易混淆，甚至寫出 bug code，這章我們就透過題目探討一下 &lt;code&gt;method set&lt;/code&gt; 常常被大家誤會的地方。&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;golang78syntax.md&quot;&gt;Golang 78 語法篇 - interface&lt;/a&gt;  &lt;code&gt;Line 50&lt;/code&gt; 的概念就在這篇。&lt;/p&gt;
+&lt;a href=&quot;/2020/07/03/golang78syntax/&quot; title=&quot;Golang 78 語法篇 - interface&quot;&gt;Golang 78 語法篇 - interface&lt;/a&gt; Line 50 用到的概念就在這篇。
+
+
 &lt;h1 id=&quot;題目&quot;&gt;&lt;a href=&quot;#題目&quot; class=&quot;headerlink&quot; title=&quot;題目&quot;&gt;&lt;/a&gt;題目&lt;/h1&gt;&lt;p&gt;請問以下程式輸出結果為何&lt;/p&gt;
 &lt;figure class=&quot;highlight golang&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;type&lt;/span&gt; Employee &lt;span class=&quot;keyword&quot;&gt;struct&lt;/span&gt; &amp;#123;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;params&quot;&gt;(e Employee)&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;DoWork&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt;&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	fmt.Println(&lt;span class=&quot;string&quot;&gt;&quot;do work&quot;&lt;/span&gt;)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt;&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	(&amp;amp;Employee&amp;#123;&amp;#125;).DoWork()&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
 

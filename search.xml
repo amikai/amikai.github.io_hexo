@@ -133,7 +133,9 @@
     <title>Golang 78 語法篇 - method set</title>
     <url>/2020/07/07/golang78syntax2/</url>
     <content><![CDATA[<p><code>method set</code>, <code>interface</code>, <code>auto deference or reference</code> 當這些語法綜合再一起使用時，很容易混淆，甚至寫出 bug code，這章我們就透過題目探討一下 <code>method set</code> 常常被大家誤會的地方。</p>
-<p><a href="golang78syntax.md">Golang 78 語法篇 - interface</a>  <code>Line 50</code> 的概念就在這篇。</p>
+<a href="/2020/07/03/golang78syntax/" title="Golang 78 語法篇 - interface">Golang 78 語法篇 - interface</a> Line 50 用到的概念就在這篇。
+
+
 <h1 id="題目"><a href="#題目" class="headerlink" title="題目"></a>題目</h1><p>請問以下程式輸出結果為何</p>
 <figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	(&amp;Employee&#123;&#125;).DoWork()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 

@@ -171,58 +171,6 @@
       </tags>
   </entry>
   <entry>
-    <title>聊聊 vim mark 使用情境 - code 參照</title>
-    <url>/2020/09/07/vim-mark-tips/</url>
-    <content><![CDATA[<img data-src="/2020/09/07/vim-mark-tips/cover.png" class="">
-<p>寫程式的時候常常遇到一種情況，假設你是團隊的新人，需要常常參照別人的程式，看看團隊的 coding style 等等，可能需要參照 A file 的第 10 行，B file 第 8 行，C file 第 999 行。</p>
-<p>另一種情境則是在寫測試的時候會和實作交互參照，而測試程式往往和實作程式會拆開不同的檔案，所以就必須要一直跳轉。</p>
-<p>使用 split 的方式縱然是一個不錯的方式，但是如果要參照的點大於三個，就將螢幕切成三份，那工程師就相當痛苦了，不是每個人都用這種電腦螢幕啊。這種 split 的方式還有另一個缺點：如果手殘將檔案關掉，就得重找。</p>
-<img data-src="/2020/09/07/vim-mark-tips/cj890.jpg" class="">
-
- <a id="more"></a>
-
-<h1 id="Mark"><a href="#Mark" class="headerlink" title="Mark"></a>Mark</h1><p>vim 的 mark 取名或許源自於 bookmark (書籤) 這個字，書籤的用意在於能快速找回你上次看的那一頁，而 vim mark 的用意也是如此：能快速找回你剛剛在看 code 的地方。</p>
-<p>vim 的 mark 分為三種：</p>
-<ul>
-<li>Local mark <code>a-z</code>： 每一個 file 裡皆有自己的 local mark，也就是說檔案 A 可以有 mark a, 檔案 B 裡也可以有自己的 mark a</li>
-<li>Global mark <code>A-Z</code>： 此種 mark 是全域的，也就是說在檔案 A 裡所看到的 mark A 和 B 檔案 B 裡的 mark A 是一樣的</li>
-<li>Special mark：其他神奇的 mark，不在此文章討論範圍</li>
-</ul>
-<p>mark 的基本使用：</p>
-<ul>
-<li><code>ma</code>： 在這個地方設置 mark a</li>
-<li><code>mA</code>： 在這個地方設置 mark A</li>
-<li><code>&#39;a</code>： 跳到 mark a 的這行 (此行的第一個非空白字元)</li>
-<li><code>`a</code>： 精準的跳到你當初設置 mark a 的位置 (第幾行第幾列)</li>
-<li><code>:marks</code>： 列出來所有 mark，有時候 mark 設置太多會忘</li>
-</ul>
-<p>更多詳細操作請參照 Reference 3</p>
-<h1 id="回到正題"><a href="#回到正題" class="headerlink" title="回到正題"></a>回到正題</h1><p>還記得一開始的情境敘述嗎？<br>雖然你已經知道要在 A file 第 10 行 <code>mA</code>， 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code>。</p>
-<p>實際上在寫 code 時我會這樣做：</p>
-<ul>
-<li>我會先將我需要參照的地方找出並且 mark，以剛剛的例子來說就是在 A file 第 10 行 <code>mA</code> 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code></li>
-<li>使用 <code>:vsplit</code> 將螢幕切成兩邊，左邊寫 code，右邊當參照區域</li>
-<li>需要參照 B 這個位置時，移動到參照區域 ，<code>&#39;B</code> 再移動回寫 code 區域繼續寫</li>
-</ul>
-<img data-src="/2020/09/07/vim-mark-tips/mark_show.png" class="">
-
-<p>那 local mark 什麼時候用？<br>當一個檔案大於 1000 行，寫的程式在 1001 行，但你需要參照的程式在第一行，也就是都在同一個 file 跳轉的時候可以使用。</p>
-<h1 id="search-小技巧"><a href="#search-小技巧" class="headerlink" title="search 小技巧"></a>search 小技巧</h1><p>每次在使用 <code>/</code> 搜尋一定會案 <code>n</code> 或 <code>N</code> 到處跳轉，尋找目標，常常找完了之後，忘記我原本的地方在哪了，此時就能先用 mark 記住後在開始用 <code>/</code> 查找。<br>由於常使用這種操作，所以直接這樣：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">nnoremap</span> / ms/</span><br></pre></td></tr></table></figure>
-<p> 在<code>/</code>搜尋完後，要跳回原本的地方就 <code>&#39;s</code> 就好</p>
-<h1 id="結語"><a href="#結語" class="headerlink" title="結語"></a>結語</h1><p>人類總是會在大量的資料中迷失，並且花上很多時間查找和記憶，標記(或是書籤)就是其中一種解決方案，而且應用不只在書上，到處都可以看到類似的應用，像是檔案夾的標籤、英文書在最後會有的索引，然而在寫程式上也不例外。不管是在寫 code 上還是其他應用，好好的應用這些工具將能事半功倍。</p>
-<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
-<li><a href="https://medium.com/usevim/vim-101-marks-caad7106b241" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-marks-caad7106b241</a></li>
-<li><a href="https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea</a></li>
-<li><a href="https://vim.fandom.com/wiki/Using_marks" target="_blank" rel="noopener">https://vim.fandom.com/wiki/Using_marks</a></li>
-</ol>
-]]></content>
-      <tags>
-        <tag>vim</tag>
-        <tag>neovim</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Golang 78 語法篇 - method set</title>
     <url>/2020/07/07/golang78syntax2/</url>
     <content><![CDATA[<p><code>method set</code>, <code>interface</code>, <code>auto deference or reference</code> 當這些語法綜合再一起使用時，很容易混淆，甚至寫出 bug code，這章我們就透過題目探討一下 <code>method set</code> 常常被大家誤會的地方。</p>
@@ -291,7 +239,12 @@
 <img data-src="/2020/09/10/vim-make/copen_cmd.png" class="">
 <p>移轉到 quickfix-window 後，移動到想要查看的錯誤，案 <code>enter</code> 即可跳轉到該錯誤位置，當然也能配合 <code>:cn</code>, <code>:cp</code>, <code>:cc [number]</code>，quickfix-window 會配合這些指令連動顯示目前位置。</p>
 <p>Note: 詳見 <code>:help quickfix-window</code></p>
-<h1 id="讓你飛起來的-vim-dispatch"><a href="#讓你飛起來的-vim-dispatch" class="headerlink" title="讓你飛起來的 vim-dispatch"></a>讓你飛起來的 vim-dispatch</h1><p>使用 vim 內建的 <code>:make</code> 指令，在編譯時其實是會 block 整個 vim 的，若專案夠大編譯很久，那段時間什麼都不能做，只能看著他編譯，vim-dispatch 完美解決了這個問題，<br>其實 vim-dispatch 用法很簡單，<code>:Make</code> 編譯，<code>:Copen</code> 打開 quickfix-window，當然也能配合其他跳轉指令使用，幾乎完美配合 vim 的使用習慣。<br>當然 vim-dispatch 不只這樣而已，詳情請見 vim-dispatch 的文件。</p>
+<h1 id="讓你飛起來的-vim-dispatch"><a href="#讓你飛起來的-vim-dispatch" class="headerlink" title="讓你飛起來的 vim-dispatch"></a>讓你飛起來的 vim-dispatch</h1><p>使用 vim 內建的 <code>:make</code> 指令，在編譯時其實是會 block 整個 vim 的，若專案夠大編譯很久，那段時間什麼都不能做，只能看著他編譯，vim-dispatch 完美解決了這個問題。</p>
+<p>安裝:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Plug &#39;tpope&#x2F;vim-dispatch&#39;</span><br></pre></td></tr></table></figure>
+
+<p>其實 vim-dispatch 用法很簡單，<code>:Make</code> 編譯，<code>:Copen</code> 打開 quickfix-window，當然也能配合剛剛所提到的跳轉指令使用，幾乎完美配合 vim 的使用習慣。</p>
+<p>當然 vim-dispatch 不只這樣而已，其他功能不在本篇範圍，詳情請見 vim-dispatch 的文件。</p>
 <p>火力展示，可以看到上方的視窗可以移動 cursor，下方則繼續編譯:</p>
 <img data-src="/2020/09/10/vim-make/Make_demo.gif" class="">
 
@@ -309,6 +262,58 @@
 ]]></content>
       <tags>
         <tag>vim</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>聊聊 vim mark 使用情境 - code 參照</title>
+    <url>/2020/09/07/vim-mark-tips/</url>
+    <content><![CDATA[<img data-src="/2020/09/07/vim-mark-tips/cover.png" class="">
+<p>寫程式的時候常常遇到一種情況，假設你是團隊的新人，需要常常參照別人的程式，看看團隊的 coding style 等等，可能需要參照 A file 的第 10 行，B file 第 8 行，C file 第 999 行。</p>
+<p>另一種情境則是在寫測試的時候會和實作交互參照，而測試程式往往和實作程式會拆開不同的檔案，所以就必須要一直跳轉。</p>
+<p>使用 split 的方式縱然是一個不錯的方式，但是如果要參照的點大於三個，就將螢幕切成三份，那工程師就相當痛苦了，不是每個人都用這種電腦螢幕啊。這種 split 的方式還有另一個缺點：如果手殘將檔案關掉，就得重找。</p>
+<img data-src="/2020/09/07/vim-mark-tips/cj890.jpg" class="">
+
+ <a id="more"></a>
+
+<h1 id="Mark"><a href="#Mark" class="headerlink" title="Mark"></a>Mark</h1><p>vim 的 mark 取名或許源自於 bookmark (書籤) 這個字，書籤的用意在於能快速找回你上次看的那一頁，而 vim mark 的用意也是如此：能快速找回你剛剛在看 code 的地方。</p>
+<p>vim 的 mark 分為三種：</p>
+<ul>
+<li>Local mark <code>a-z</code>： 每一個 file 裡皆有自己的 local mark，也就是說檔案 A 可以有 mark a, 檔案 B 裡也可以有自己的 mark a</li>
+<li>Global mark <code>A-Z</code>： 此種 mark 是全域的，也就是說在檔案 A 裡所看到的 mark A 和 B 檔案 B 裡的 mark A 是一樣的</li>
+<li>Special mark：其他神奇的 mark，不在此文章討論範圍</li>
+</ul>
+<p>mark 的基本使用：</p>
+<ul>
+<li><code>ma</code>： 在這個地方設置 mark a</li>
+<li><code>mA</code>： 在這個地方設置 mark A</li>
+<li><code>&#39;a</code>： 跳到 mark a 的這行 (此行的第一個非空白字元)</li>
+<li><code>`a</code>： 精準的跳到你當初設置 mark a 的位置 (第幾行第幾列)</li>
+<li><code>:marks</code>： 列出來所有 mark，有時候 mark 設置太多會忘</li>
+</ul>
+<p>更多詳細操作請參照 Reference 3</p>
+<h1 id="回到正題"><a href="#回到正題" class="headerlink" title="回到正題"></a>回到正題</h1><p>還記得一開始的情境敘述嗎？<br>雖然你已經知道要在 A file 第 10 行 <code>mA</code>， 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code>。</p>
+<p>實際上在寫 code 時我會這樣做：</p>
+<ul>
+<li>我會先將我需要參照的地方找出並且 mark，以剛剛的例子來說就是在 A file 第 10 行 <code>mA</code> 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code></li>
+<li>使用 <code>:vsplit</code> 將螢幕切成兩邊，左邊寫 code，右邊當參照區域</li>
+<li>需要參照 B 這個位置時，移動到參照區域 ，<code>&#39;B</code> 再移動回寫 code 區域繼續寫</li>
+</ul>
+<img data-src="/2020/09/07/vim-mark-tips/mark_show.png" class="">
+
+<p>那 local mark 什麼時候用？<br>當一個檔案大於 1000 行，寫的程式在 1001 行，但你需要參照的程式在第一行，也就是都在同一個 file 跳轉的時候可以使用。</p>
+<h1 id="search-小技巧"><a href="#search-小技巧" class="headerlink" title="search 小技巧"></a>search 小技巧</h1><p>每次在使用 <code>/</code> 搜尋一定會案 <code>n</code> 或 <code>N</code> 到處跳轉，尋找目標，常常找完了之後，忘記我原本的地方在哪了，此時就能先用 mark 記住後在開始用 <code>/</code> 查找。<br>由於常使用這種操作，所以直接這樣：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">nnoremap</span> / ms/</span><br></pre></td></tr></table></figure>
+<p> 在<code>/</code>搜尋完後，要跳回原本的地方就 <code>&#39;s</code> 就好</p>
+<h1 id="結語"><a href="#結語" class="headerlink" title="結語"></a>結語</h1><p>人類總是會在大量的資料中迷失，並且花上很多時間查找和記憶，標記(或是書籤)就是其中一種解決方案，而且應用不只在書上，到處都可以看到類似的應用，像是檔案夾的標籤、英文書在最後會有的索引，然而在寫程式上也不例外。不管是在寫 code 上還是其他應用，好好的應用這些工具將能事半功倍。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
+<li><a href="https://medium.com/usevim/vim-101-marks-caad7106b241" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-marks-caad7106b241</a></li>
+<li><a href="https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea</a></li>
+<li><a href="https://vim.fandom.com/wiki/Using_marks" target="_blank" rel="noopener">https://vim.fandom.com/wiki/Using_marks</a></li>
+</ol>
+]]></content>
+      <tags>
+        <tag>vim</tag>
+        <tag>neovim</tag>
       </tags>
   </entry>
 </search>

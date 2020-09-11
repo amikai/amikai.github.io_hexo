@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://amikai.github.io/"/>
-  <updated>2020-09-09T03:14:26.516Z</updated>
+  <updated>2020-09-11T04:43:37.211Z</updated>
   <id>https://amikai.github.io/</id>
   
   <author>
@@ -15,6 +15,27 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>誰說不能在 vim 裡編譯，從 :make 到 :Make</title>
+    <link href="https://amikai.github.io/2020/09/10/vim-make/"/>
+    <id>https://amikai.github.io/2020/09/10/vim-make/</id>
+    <published>2020-09-09T16:21:31.000Z</published>
+    <updated>2020-09-11T04:43:37.211Z</updated>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;前言&quot;&gt;&lt;a href=&quot;#前言&quot; class=&quot;headerlink&quot; title=&quot;前言&quot;&gt;&lt;/a&gt;前言&lt;/h1&gt;&lt;p&gt;回想一下，上一次使用 vim 寫 code 到一個段落要編譯時，你是怎麼做的。&lt;/p&gt;
+&lt;p&gt;我看到大多數人的方式，就是將 terminal 切成兩塊，一塊寫 code，一塊編譯，若編譯有錯誤，再移動到寫 code 區塊更改。&lt;br&gt;如果使用此方法，當專案有規模時，編譯錯誤一百條，看了編譯錯誤在哪之後，再將編譯錯誤的位置，從專案裡找出來，反覆來回 100 次，直到修正完畢。&lt;br&gt;本文以 C 語言專案為例 (當然不是只有 C 語言才能這樣子幹，可看 Q&amp;amp;A)，聊聊強大的 vim 在這種情境下有什麼好的解決方案。&lt;/p&gt;
+&lt;img data-src=&quot;/2020/09/10/vim-make/tmux_split.png&quot; class=&quot;&quot;&gt;
+    
+    </summary>
+    
+    
+    
+      <category term="vim" scheme="https://amikai.github.io/tags/vim/"/>
+    
+  </entry>
   
   <entry>
     <title>聊聊 vim mark 使用情境 - code 參照</title>

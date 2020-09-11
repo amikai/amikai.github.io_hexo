@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>https://amikai.github.io/2020/09/10/vim-make/</loc>
+    
+    <lastmod>2020-09-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://amikai.github.io/2020/07/07/golang78syntax2/</loc>
+    
+    <lastmod>2020-09-09</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://amikai.github.io/2020/09/07/vim-mark-tips/</loc>
+    
+    <lastmod>2020-09-09</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://amikai.github.io/2020/09/03/go_neovim_env/</loc>
+    
+    <lastmod>2020-09-08</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://amikai.github.io/2020/07/03/golang78syntax/</loc>
+    
+    <lastmod>2020-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://amikai.github.io/about/index.html</loc>
+    
+    <lastmod>2020-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://amikai.github.io/categories/index.html</loc>
+    
+    <lastmod>2020-07-11</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://amikai.github.io/tags/index.html</loc>
+    
+    <lastmod>2020-07-11</lastmod>
+    
+  </url>
+  
+
+  <url>
+    <loc>https://amikai.github.io/</loc>
+    <lastmod>2020-09-11</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  
+  <url>
+    <loc>https://amikai.github.io/tags/golang/</loc>
+    <lastmod>2020-09-11</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://amikai.github.io/tags/vim/</loc>
+    <lastmod>2020-09-11</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://amikai.github.io/tags/neovim/</loc>
+    <lastmod>2020-09-11</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+
+  
+  <url>
+    <loc>https://amikai.github.io/categories/golang78syntax/</loc>
+    <lastmod>2020-09-11</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+</urlset>

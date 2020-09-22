@@ -208,6 +208,115 @@
       </tags>
   </entry>
   <entry>
+    <title>誰說不能在 vim 裡編譯，從 :make 到 :Make</title>
+    <url>/2020/09/10/vim-make/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>回想一下，上一次使用 vim 寫 code 到一個段落要編譯時，你是怎麼做的。</p>
+<p>我看到大多數人的方式，就是將 terminal 切成兩塊，一塊寫 code，一塊編譯，若編譯有錯誤，再移動到寫 code 區塊更改。<br>如果使用此方法，當專案有規模時，編譯錯誤一百條，看了編譯錯誤在哪之後，再將編譯錯誤的位置，從專案裡找出來，反覆來回 100 次，直到修正完畢。<br>本文以 C 語言專案為例 (當然不是只有 C 語言才能這樣子幹，可看 Q&amp;A)，聊聊強大的 vim 在這種情境下有什麼好的解決方案。</p>
+<img data-src="/2020/09/10/vim-make/tmux_split.png" class="">
+ <a id="more"></a>
+
+
+<h1 id="強大的-make"><a href="#強大的-make" class="headerlink" title="強大的 :make"></a>強大的 <code>:make</code></h1><h2 id="基本款"><a href="#基本款" class="headerlink" title="基本款"></a>基本款</h2><p>此次範例就拿 neovim 來編譯好了，根據官方文件要這樣編譯 <code>make CMAKE_BUILD_TYPE=Release</code>，所以在我在 vim 裡這樣編 <code>:make CMAKE_BUILD_TYPE=Release</code></p>
+<p>看起來噴了一點錯誤，案了 <code>enter</code> 似乎之後什麼事都沒發生，回到平常。</p>
+<img data-src="/2020/09/10/vim-make/make_cmd.png" class="">
+
+<p>用 <code>:cl</code> 指令，喔幹!不是一點錯誤，是一堆錯誤，沒列出來根本不知道。</p>
+<img data-src="/2020/09/10/vim-make/clist_cmd.png" class="">
+
+<p>重點來了!! 可以使用 <code>:cn</code> (<code>:cnext</code>) 跳到下一個錯誤位置，<code>:cp</code> (<code>:cprevious</code>) 跳轉到上一個錯誤位置，就不需要自己手動一個一個錯誤找出來。<br>看上圖，可以觀察到，每一條錯誤前面都有一個數字，如果想要跳到特定錯誤去修那就使用 <code>:cc [number]</code>，跳轉到第一個錯誤就用 <code>:cc 12</code>，跳轉到第三個錯誤就用 <code>:cc 19</code>。</p>
+<p>火力展示:</p>
+<img data-src="/2020/09/10/vim-make/clist_demo.gif" class="">
+
+<p>總結一下指令:</p>
+<ul>
+<li><code>:make</code>: 執行 makefile</li>
+<li><code>:cl</code>: 列出所有錯誤</li>
+<li><code>:cn</code>: 跳到下個錯誤</li>
+<li><code>:cp</code>: 跳到上個錯誤</li>
+<li><code>:cc [number]</code>: 跳轉到特定錯誤</li>
+</ul>
+<h2 id="如虎添翼的-quickfix-window"><a href="#如虎添翼的-quickfix-window" class="headerlink" title="如虎添翼的 quickfix-window"></a>如虎添翼的 quickfix-window</h2><p>編譯完之後，除了用 <code>:cl</code> 查看，另一種方式就是用 <code>:copen</code>，打下此指令之後，將會彈出 quickfix-window，列出的錯誤其實就是 <code>:clist</code> 的詳細版本， quickfix-window 只是提供了一種查找的方式。</p>
+<img data-src="/2020/09/10/vim-make/copen_cmd.png" class="">
+<p>移轉到 quickfix-window 後，移動到想要查看的錯誤，案 <code>enter</code> 即可跳轉到該錯誤位置，當然也能配合 <code>:cn</code>, <code>:cp</code>, <code>:cc [number]</code>，quickfix-window 會配合這些指令連動顯示目前位置。</p>
+<p>Note: 詳見 <code>:help quickfix-window</code></p>
+<h1 id="讓你飛起來的-vim-dispatch"><a href="#讓你飛起來的-vim-dispatch" class="headerlink" title="讓你飛起來的 vim-dispatch"></a>讓你飛起來的 vim-dispatch</h1><p>使用 vim 內建的 <code>:make</code> 指令，在編譯時其實是會 block 整個 vim 的，若專案夠大編譯很久，那段時間什麼都不能做，只能看著他編譯，vim-dispatch 完美解決了這個問題。</p>
+<p>安裝:</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">Plug <span class="string">'tpope/vim-dispatch'</span></span><br></pre></td></tr></table></figure>
+
+<p>其實 vim-dispatch 用法很簡單，<code>:Make</code> 編譯，<code>:Copen</code> 打開 quickfix-window，當然也能配合剛剛所提到的跳轉指令使用，幾乎完美配合 vim 的使用習慣。</p>
+<p>當然 vim-dispatch 不只這樣而已，其他功能不在本篇範圍，詳情請見 vim-dispatch 的文件。</p>
+<p>火力展示，可以看到上方的視窗可以移動 cursor，下方則繼續編譯:</p>
+<img data-src="/2020/09/10/vim-make/Make_demo.gif" class="">
+
+<h1 id="Q-amp-A"><a href="#Q-amp-A" class="headerlink" title="Q &amp; A"></a>Q &amp; A</h1><h2 id="vim-使用-make-指令，那不是只有寫-Makefile-才能用嗎"><a href="#vim-使用-make-指令，那不是只有寫-Makefile-才能用嗎" class="headerlink" title="vim 使用 :make 指令，那不是只有寫 Makefile 才能用嗎?"></a>vim 使用 <code>:make</code> 指令，那不是只有寫 Makefile 才能用嗎?</h2><p>當然在想在其他語言使用 <code>:make</code> 指令，達到一樣效果就要編寫客製化的 plugin 了，當然很受歡迎的語言都有人寫好啦，通常都是包在語言 plugin 裡：</p>
+<ul>
+<li><a href="https://github.com/rust-lang/rust.vim" target="_blank" rel="noopener">rust.vim</a>: 原本編譯方式是 <code>cargo build</code>，在 vim 裡變成 <code>:make build</code> 就好，以此類推可以 <code>:make run</code></li>
+<li><a href="https://github.com/fatih/vim-go" target="_blank" rel="noopener">vim-go</a>:在 vim-go 可以使用 <code>:GoBuild</code>, <code>:GoRun</code></li>
+</ul>
+<h1 id="結語"><a href="#結語" class="headerlink" title="結語"></a>結語</h1><p>vim 是一個古老的編輯器，某些特色和 C 語言沾上關係，比如說 make 指令 (或許當年 C 語言獨佔天下!?)，當然 vim 不只可以使用 make 這種自動化編譯，vim 也開放了幾個 api 使得再起他語言也能達成一樣的效果 (詳見 <code>:help makeprg</code>)，在專案愈大時愈能顯現其效果，當年我也是碰了一點 linux kernel，才學習到這個技巧，加速了不少開發速度。</p>
+<p>如果有什麼相關技巧，歡迎在底下留言交流。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://www.ptt.cc/bbs/Editor/M.1285722960.A.BF5.html" target="_blank" rel="noopener">Re: [轉錄][問題] VIM 編譯與執行</a></li>
+<li>vim help doc</li>
+</ul>
+]]></content>
+      <tags>
+        <tag>vim</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>聊聊 vim mark 使用情境 - code 參照</title>
+    <url>/2020/09/07/vim-mark-tips/</url>
+    <content><![CDATA[<img data-src="/2020/09/07/vim-mark-tips/cover.png" class="">
+<p>寫程式的時候常常遇到一種情況，假設你是團隊的新人，需要常常參照別人的程式，看看團隊的 coding style 等等，可能需要參照 A file 的第 10 行，B file 第 8 行，C file 第 999 行。</p>
+<p>另一種情境則是在寫測試的時候會和實作交互參照，而測試程式往往和實作程式會拆開不同的檔案，所以就必須要一直跳轉。</p>
+<p>使用 split 的方式縱然是一個不錯的方式，但是如果要參照的點大於三個，就將螢幕切成三份，那工程師就相當痛苦了，不是每個人都用這種電腦螢幕啊。這種 split 的方式還有另一個缺點：如果手殘將檔案關掉，就得重找。</p>
+<img data-src="/2020/09/07/vim-mark-tips/cj890.jpg" class="">
+
+ <a id="more"></a>
+
+<h1 id="Mark"><a href="#Mark" class="headerlink" title="Mark"></a>Mark</h1><p>vim 的 mark 取名或許源自於 bookmark (書籤) 這個字，書籤的用意在於能快速找回你上次看的那一頁，而 vim mark 的用意也是如此：能快速找回你剛剛在看 code 的地方。</p>
+<p>vim 的 mark 分為三種：</p>
+<ul>
+<li>Local mark <code>a-z</code>： 每一個 file 裡皆有自己的 local mark，也就是說檔案 A 可以有 mark a, 檔案 B 裡也可以有自己的 mark a</li>
+<li>Global mark <code>A-Z</code>： 此種 mark 是全域的，也就是說在檔案 A 裡所看到的 mark A 和 B 檔案 B 裡的 mark A 是一樣的</li>
+<li>Special mark：其他神奇的 mark，不在此文章討論範圍</li>
+</ul>
+<p>mark 的基本使用：</p>
+<ul>
+<li><code>ma</code>： 在這個地方設置 mark a</li>
+<li><code>mA</code>： 在這個地方設置 mark A</li>
+<li><code>&#39;a</code>： 跳到 mark a 的這行 (此行的第一個非空白字元)</li>
+<li><code>`a</code>： 精準的跳到你當初設置 mark a 的位置 (第幾行第幾列)</li>
+<li><code>:marks</code>： 列出來所有 mark，有時候 mark 設置太多會忘</li>
+</ul>
+<p>更多詳細操作請參照 Reference 3</p>
+<h1 id="回到正題"><a href="#回到正題" class="headerlink" title="回到正題"></a>回到正題</h1><p>還記得一開始的情境敘述嗎？<br>雖然你已經知道要在 A file 第 10 行 <code>mA</code>， 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code>。</p>
+<p>實際上在寫 code 時我會這樣做：</p>
+<ul>
+<li>我會先將我需要參照的地方找出並且 mark，以剛剛的例子來說就是在 A file 第 10 行 <code>mA</code> 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code></li>
+<li>使用 <code>:vsplit</code> 將螢幕切成兩邊，左邊寫 code，右邊當參照區域</li>
+<li>需要參照 B 這個位置時，移動到參照區域 ，<code>&#39;B</code> 再移動回寫 code 區域繼續寫</li>
+</ul>
+<img data-src="/2020/09/07/vim-mark-tips/mark_show.png" class="">
+
+<p>那 local mark 什麼時候用？<br>當一個檔案大於 1000 行，寫的程式在 1001 行，但你需要參照的程式在第一行，也就是都在同一個 file 跳轉的時候可以使用。</p>
+<h1 id="search-小技巧"><a href="#search-小技巧" class="headerlink" title="search 小技巧"></a>search 小技巧</h1><p>每次在使用 <code>/</code> 搜尋一定會案 <code>n</code> 或 <code>N</code> 到處跳轉，尋找目標，常常找完了之後，忘記我原本的地方在哪了，此時就能先用 mark 記住後在開始用 <code>/</code> 查找。<br>由於常使用這種操作，所以直接這樣：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">nnoremap</span> / ms/</span><br></pre></td></tr></table></figure>
+<p> 在<code>/</code>搜尋完後，要跳回原本的地方就 <code>&#39;s</code> 就好</p>
+<h1 id="結語"><a href="#結語" class="headerlink" title="結語"></a>結語</h1><p>人類總是會在大量的資料中迷失，並且花上很多時間查找和記憶，標記(或是書籤)就是其中一種解決方案，而且應用不只在書上，到處都可以看到類似的應用，像是檔案夾的標籤、英文書在最後會有的索引，然而在寫程式上也不例外。不管是在寫 code 上還是其他應用，好好的應用這些工具將能事半功倍。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
+<li><a href="https://medium.com/usevim/vim-101-marks-caad7106b241" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-marks-caad7106b241</a></li>
+<li><a href="https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea</a></li>
+<li><a href="https://vim.fandom.com/wiki/Using_marks" target="_blank" rel="noopener">https://vim.fandom.com/wiki/Using_marks</a></li>
+</ol>
+]]></content>
+      <tags>
+        <tag>vim</tag>
+        <tag>neovim</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>你應該擴充的 text object</title>
     <url>/2020/09/22/vim-text-object/</url>
     <content><![CDATA[<p>vim 高效率編輯的背後，operator, moiton, text object 的配合功不可沒。</p>
@@ -238,7 +347,7 @@
 <ul>
 <li><code>dG</code>: 刪除 從游標到檔案的尾部</li>
 <li><code>dgg</code>: 刪除 從游標到檔案的頭部</li>
-<li><code>w</code>: 刪除 從游標到下一個字</li>
+<li><code>dw</code>: 刪除 從游標到下一個字</li>
 <li><code>dfz</code>: 刪除 從游標底下到達此行 z 這個字母 (如果此行無 z 則不動作)</li>
 </ul>
 <p><strong>text object</strong>： 通常是已經定義的一個範圍，像是 word, quote, () block … 等。內建的 text object 都會有 i 或 a 為前輟，i 表示 inside (不包含的概念)、 a 表示 around (包含的概念)。</p>
@@ -328,115 +437,6 @@
       <tags>
         <tag>vim</tag>
         <tag>neovim</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>聊聊 vim mark 使用情境 - code 參照</title>
-    <url>/2020/09/07/vim-mark-tips/</url>
-    <content><![CDATA[<img data-src="/2020/09/07/vim-mark-tips/cover.png" class="">
-<p>寫程式的時候常常遇到一種情況，假設你是團隊的新人，需要常常參照別人的程式，看看團隊的 coding style 等等，可能需要參照 A file 的第 10 行，B file 第 8 行，C file 第 999 行。</p>
-<p>另一種情境則是在寫測試的時候會和實作交互參照，而測試程式往往和實作程式會拆開不同的檔案，所以就必須要一直跳轉。</p>
-<p>使用 split 的方式縱然是一個不錯的方式，但是如果要參照的點大於三個，就將螢幕切成三份，那工程師就相當痛苦了，不是每個人都用這種電腦螢幕啊。這種 split 的方式還有另一個缺點：如果手殘將檔案關掉，就得重找。</p>
-<img data-src="/2020/09/07/vim-mark-tips/cj890.jpg" class="">
-
- <a id="more"></a>
-
-<h1 id="Mark"><a href="#Mark" class="headerlink" title="Mark"></a>Mark</h1><p>vim 的 mark 取名或許源自於 bookmark (書籤) 這個字，書籤的用意在於能快速找回你上次看的那一頁，而 vim mark 的用意也是如此：能快速找回你剛剛在看 code 的地方。</p>
-<p>vim 的 mark 分為三種：</p>
-<ul>
-<li>Local mark <code>a-z</code>： 每一個 file 裡皆有自己的 local mark，也就是說檔案 A 可以有 mark a, 檔案 B 裡也可以有自己的 mark a</li>
-<li>Global mark <code>A-Z</code>： 此種 mark 是全域的，也就是說在檔案 A 裡所看到的 mark A 和 B 檔案 B 裡的 mark A 是一樣的</li>
-<li>Special mark：其他神奇的 mark，不在此文章討論範圍</li>
-</ul>
-<p>mark 的基本使用：</p>
-<ul>
-<li><code>ma</code>： 在這個地方設置 mark a</li>
-<li><code>mA</code>： 在這個地方設置 mark A</li>
-<li><code>&#39;a</code>： 跳到 mark a 的這行 (此行的第一個非空白字元)</li>
-<li><code>`a</code>： 精準的跳到你當初設置 mark a 的位置 (第幾行第幾列)</li>
-<li><code>:marks</code>： 列出來所有 mark，有時候 mark 設置太多會忘</li>
-</ul>
-<p>更多詳細操作請參照 Reference 3</p>
-<h1 id="回到正題"><a href="#回到正題" class="headerlink" title="回到正題"></a>回到正題</h1><p>還記得一開始的情境敘述嗎？<br>雖然你已經知道要在 A file 第 10 行 <code>mA</code>， 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code>。</p>
-<p>實際上在寫 code 時我會這樣做：</p>
-<ul>
-<li>我會先將我需要參照的地方找出並且 mark，以剛剛的例子來說就是在 A file 第 10 行 <code>mA</code> 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code></li>
-<li>使用 <code>:vsplit</code> 將螢幕切成兩邊，左邊寫 code，右邊當參照區域</li>
-<li>需要參照 B 這個位置時，移動到參照區域 ，<code>&#39;B</code> 再移動回寫 code 區域繼續寫</li>
-</ul>
-<img data-src="/2020/09/07/vim-mark-tips/mark_show.png" class="">
-
-<p>那 local mark 什麼時候用？<br>當一個檔案大於 1000 行，寫的程式在 1001 行，但你需要參照的程式在第一行，也就是都在同一個 file 跳轉的時候可以使用。</p>
-<h1 id="search-小技巧"><a href="#search-小技巧" class="headerlink" title="search 小技巧"></a>search 小技巧</h1><p>每次在使用 <code>/</code> 搜尋一定會案 <code>n</code> 或 <code>N</code> 到處跳轉，尋找目標，常常找完了之後，忘記我原本的地方在哪了，此時就能先用 mark 記住後在開始用 <code>/</code> 查找。<br>由於常使用這種操作，所以直接這樣：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">nnoremap</span> / ms/</span><br></pre></td></tr></table></figure>
-<p> 在<code>/</code>搜尋完後，要跳回原本的地方就 <code>&#39;s</code> 就好</p>
-<h1 id="結語"><a href="#結語" class="headerlink" title="結語"></a>結語</h1><p>人類總是會在大量的資料中迷失，並且花上很多時間查找和記憶，標記(或是書籤)就是其中一種解決方案，而且應用不只在書上，到處都可以看到類似的應用，像是檔案夾的標籤、英文書在最後會有的索引，然而在寫程式上也不例外。不管是在寫 code 上還是其他應用，好好的應用這些工具將能事半功倍。</p>
-<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
-<li><a href="https://medium.com/usevim/vim-101-marks-caad7106b241" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-marks-caad7106b241</a></li>
-<li><a href="https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea</a></li>
-<li><a href="https://vim.fandom.com/wiki/Using_marks" target="_blank" rel="noopener">https://vim.fandom.com/wiki/Using_marks</a></li>
-</ol>
-]]></content>
-      <tags>
-        <tag>vim</tag>
-        <tag>neovim</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>誰說不能在 vim 裡編譯，從 :make 到 :Make</title>
-    <url>/2020/09/10/vim-make/</url>
-    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>回想一下，上一次使用 vim 寫 code 到一個段落要編譯時，你是怎麼做的。</p>
-<p>我看到大多數人的方式，就是將 terminal 切成兩塊，一塊寫 code，一塊編譯，若編譯有錯誤，再移動到寫 code 區塊更改。<br>如果使用此方法，當專案有規模時，編譯錯誤一百條，看了編譯錯誤在哪之後，再將編譯錯誤的位置，從專案裡找出來，反覆來回 100 次，直到修正完畢。<br>本文以 C 語言專案為例 (當然不是只有 C 語言才能這樣子幹，可看 Q&amp;A)，聊聊強大的 vim 在這種情境下有什麼好的解決方案。</p>
-<img data-src="/2020/09/10/vim-make/tmux_split.png" class="">
- <a id="more"></a>
-
-
-<h1 id="強大的-make"><a href="#強大的-make" class="headerlink" title="強大的 :make"></a>強大的 <code>:make</code></h1><h2 id="基本款"><a href="#基本款" class="headerlink" title="基本款"></a>基本款</h2><p>此次範例就拿 neovim 來編譯好了，根據官方文件要這樣編譯 <code>make CMAKE_BUILD_TYPE=Release</code>，所以在我在 vim 裡這樣編 <code>:make CMAKE_BUILD_TYPE=Release</code></p>
-<p>看起來噴了一點錯誤，案了 <code>enter</code> 似乎之後什麼事都沒發生，回到平常。</p>
-<img data-src="/2020/09/10/vim-make/make_cmd.png" class="">
-
-<p>用 <code>:cl</code> 指令，喔幹!不是一點錯誤，是一堆錯誤，沒列出來根本不知道。</p>
-<img data-src="/2020/09/10/vim-make/clist_cmd.png" class="">
-
-<p>重點來了!! 可以使用 <code>:cn</code> (<code>:cnext</code>) 跳到下一個錯誤位置，<code>:cp</code> (<code>:cprevious</code>) 跳轉到上一個錯誤位置，就不需要自己手動一個一個錯誤找出來。<br>看上圖，可以觀察到，每一條錯誤前面都有一個數字，如果想要跳到特定錯誤去修那就使用 <code>:cc [number]</code>，跳轉到第一個錯誤就用 <code>:cc 12</code>，跳轉到第三個錯誤就用 <code>:cc 19</code>。</p>
-<p>火力展示:</p>
-<img data-src="/2020/09/10/vim-make/clist_demo.gif" class="">
-
-<p>總結一下指令:</p>
-<ul>
-<li><code>:make</code>: 執行 makefile</li>
-<li><code>:cl</code>: 列出所有錯誤</li>
-<li><code>:cn</code>: 跳到下個錯誤</li>
-<li><code>:cp</code>: 跳到上個錯誤</li>
-<li><code>:cc [number]</code>: 跳轉到特定錯誤</li>
-</ul>
-<h2 id="如虎添翼的-quickfix-window"><a href="#如虎添翼的-quickfix-window" class="headerlink" title="如虎添翼的 quickfix-window"></a>如虎添翼的 quickfix-window</h2><p>編譯完之後，除了用 <code>:cl</code> 查看，另一種方式就是用 <code>:copen</code>，打下此指令之後，將會彈出 quickfix-window，列出的錯誤其實就是 <code>:clist</code> 的詳細版本， quickfix-window 只是提供了一種查找的方式。</p>
-<img data-src="/2020/09/10/vim-make/copen_cmd.png" class="">
-<p>移轉到 quickfix-window 後，移動到想要查看的錯誤，案 <code>enter</code> 即可跳轉到該錯誤位置，當然也能配合 <code>:cn</code>, <code>:cp</code>, <code>:cc [number]</code>，quickfix-window 會配合這些指令連動顯示目前位置。</p>
-<p>Note: 詳見 <code>:help quickfix-window</code></p>
-<h1 id="讓你飛起來的-vim-dispatch"><a href="#讓你飛起來的-vim-dispatch" class="headerlink" title="讓你飛起來的 vim-dispatch"></a>讓你飛起來的 vim-dispatch</h1><p>使用 vim 內建的 <code>:make</code> 指令，在編譯時其實是會 block 整個 vim 的，若專案夠大編譯很久，那段時間什麼都不能做，只能看著他編譯，vim-dispatch 完美解決了這個問題。</p>
-<p>安裝:</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">Plug <span class="string">'tpope/vim-dispatch'</span></span><br></pre></td></tr></table></figure>
-
-<p>其實 vim-dispatch 用法很簡單，<code>:Make</code> 編譯，<code>:Copen</code> 打開 quickfix-window，當然也能配合剛剛所提到的跳轉指令使用，幾乎完美配合 vim 的使用習慣。</p>
-<p>當然 vim-dispatch 不只這樣而已，其他功能不在本篇範圍，詳情請見 vim-dispatch 的文件。</p>
-<p>火力展示，可以看到上方的視窗可以移動 cursor，下方則繼續編譯:</p>
-<img data-src="/2020/09/10/vim-make/Make_demo.gif" class="">
-
-<h1 id="Q-amp-A"><a href="#Q-amp-A" class="headerlink" title="Q &amp; A"></a>Q &amp; A</h1><h2 id="vim-使用-make-指令，那不是只有寫-Makefile-才能用嗎"><a href="#vim-使用-make-指令，那不是只有寫-Makefile-才能用嗎" class="headerlink" title="vim 使用 :make 指令，那不是只有寫 Makefile 才能用嗎?"></a>vim 使用 <code>:make</code> 指令，那不是只有寫 Makefile 才能用嗎?</h2><p>當然在想在其他語言使用 <code>:make</code> 指令，達到一樣效果就要編寫客製化的 plugin 了，當然很受歡迎的語言都有人寫好啦，通常都是包在語言 plugin 裡：</p>
-<ul>
-<li><a href="https://github.com/rust-lang/rust.vim" target="_blank" rel="noopener">rust.vim</a>: 原本編譯方式是 <code>cargo build</code>，在 vim 裡變成 <code>:make build</code> 就好，以此類推可以 <code>:make run</code></li>
-<li><a href="https://github.com/fatih/vim-go" target="_blank" rel="noopener">vim-go</a>:在 vim-go 可以使用 <code>:GoBuild</code>, <code>:GoRun</code></li>
-</ul>
-<h1 id="結語"><a href="#結語" class="headerlink" title="結語"></a>結語</h1><p>vim 是一個古老的編輯器，某些特色和 C 語言沾上關係，比如說 make 指令 (或許當年 C 語言獨佔天下!?)，當然 vim 不只可以使用 make 這種自動化編譯，vim 也開放了幾個 api 使得再起他語言也能達成一樣的效果 (詳見 <code>:help makeprg</code>)，在專案愈大時愈能顯現其效果，當年我也是碰了一點 linux kernel，才學習到這個技巧，加速了不少開發速度。</p>
-<p>如果有什麼相關技巧，歡迎在底下留言交流。</p>
-<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
-<li><a href="https://www.ptt.cc/bbs/Editor/M.1285722960.A.BF5.html" target="_blank" rel="noopener">Re: [轉錄][問題] VIM 編譯與執行</a></li>
-<li>vim help doc</li>
-</ul>
-]]></content>
-      <tags>
-        <tag>vim</tag>
       </tags>
   </entry>
 </search>

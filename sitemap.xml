@@ -4,7 +4,7 @@
   <url>
     <loc>https://amikai.github.io/2020/09/22/vim-text-object/</loc>
     
-    <lastmod>2020-09-22</lastmod>
+    <lastmod>2020-09-23</lastmod>
     
   </url>
   
@@ -67,7 +67,7 @@
 
   <url>
     <loc>https://amikai.github.io/</loc>
-    <lastmod>2020-09-22</lastmod>
+    <lastmod>2020-09-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -75,21 +75,21 @@
   
   <url>
     <loc>https://amikai.github.io/tags/vim/</loc>
-    <lastmod>2020-09-22</lastmod>
+    <lastmod>2020-09-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://amikai.github.io/tags/neovim/</loc>
-    <lastmod>2020-09-22</lastmod>
+    <lastmod>2020-09-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://amikai.github.io/tags/golang/</loc>
-    <lastmod>2020-09-22</lastmod>
+    <lastmod>2020-09-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
@@ -98,7 +98,7 @@
   
   <url>
     <loc>https://amikai.github.io/categories/golang78syntax/</loc>
-    <lastmod>2020-09-22</lastmod>
+    <lastmod>2020-09-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>

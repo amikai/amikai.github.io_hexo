@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://amikai.github.io/"/>
-  <updated>2020-09-23T05:06:26.819Z</updated>
+  <updated>2020-09-23T05:12:44.915Z</updated>
   <id>https://amikai.github.io/</id>
   
   <author>
@@ -21,13 +21,13 @@
     <link href="https://amikai.github.io/2020/09/22/vim-text-object/"/>
     <id>https://amikai.github.io/2020/09/22/vim-text-object/</id>
     <published>2020-09-22T11:03:52.000Z</published>
-    <updated>2020-09-23T05:06:26.819Z</updated>
+    <updated>2020-09-23T05:12:44.915Z</updated>
     
     <summary type="html">
     
       &lt;p&gt;vim 高效率編輯的背後，operator, motion, text object 的配合功不可沒。&lt;/p&gt;
 &lt;p&gt;operator 是編輯的動作， text object 就是文字區塊，motion 是跳轉到文件點，透過三者的按鍵配合，就能達到所想及所得的編輯方式。&lt;/p&gt;
-&lt;p&gt;如果你有看過別人使用 vim ，通常會有這種想法：怎麼隨便按幾顆鍵就刪這裡刪那裡的感覺複製這複製那，速度快到看不懂在幹嘛，而且還不會錯，因為只要想好要做什麼，案件按下去就對了，這也是為什麼會高效率。說了一堆，反正就是 &lt;del&gt;&lt;strong&gt;耍潮必備&lt;/strong&gt;&lt;/del&gt;。&lt;/p&gt;
+&lt;p&gt;如果你有看過別人使用 vim ，通常會有這種想法：怎麼隨便按幾個鍵就刪這裡刪那裡複製這裡複製那裡，速度快到看不懂在幹嘛，而且還不會出錯，因為只要想好要做什麼，按鍵按下去就對了，這也是為什麼會高效率。說了一堆，反正就是 &lt;del&gt;&lt;strong&gt;耍潮必備&lt;/strong&gt;&lt;/del&gt;。&lt;/p&gt;
 &lt;p&gt;本篇將會提到:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;p&gt;operator, text object, motion 的配合用法&lt;/p&gt;

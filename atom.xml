@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://amikai.github.io/"/>
-  <updated>2020-09-23T05:12:44.915Z</updated>
+  <updated>2020-09-29T13:58:51.731Z</updated>
   <id>https://amikai.github.io/</id>
   
   <author>
@@ -15,6 +15,29 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>vim 高亮 yank 區域</title>
+    <link href="https://amikai.github.io/2020/09/29/vim-tips-highlight-yank-region/"/>
+    <id>https://amikai.github.io/2020/09/29/vim-tips-highlight-yank-region/</id>
+    <published>2020-09-29T13:09:01.000Z</published>
+    <updated>2020-09-29T13:58:51.731Z</updated>
+    
+    <summary type="html">
+    
+      &lt;p&gt;&lt;code&gt;y&lt;/code&gt; 是在 vim 裡最常使用的使用的 operator 之一，使用 &lt;code&gt;y&lt;/code&gt; operator 將會執行 yank 動作，但它無法像 &lt;code&gt;c&lt;/code&gt; (change) 和 &lt;code&gt;d&lt;/code&gt; (delete) operator 使用之後馬上就知道對文件編輯了什麼。yank 動作是沒有反饋的，按了 &lt;code&gt;yiw&lt;/code&gt; 複製 word 之後，你也無法確定是不是按對了，還要使用 &lt;code&gt;:reg&lt;/code&gt; 檢視，頗麻煩的。&lt;/p&gt;
+&lt;p&gt;解決方案：在使用 yank operator 之後，高亮複製區域短暫的時間，就能確認複製的區域有沒有誤。以下圖例為，在 23 行按下 &lt;code&gt;yy&lt;/code&gt;, 在 24 行的 return 上按下 &lt;code&gt;yiw&lt;/code&gt;&lt;/p&gt;
+&lt;img data-src=&quot;/2020/09/29/vim-tips-highlight-yank-region/highlight_yank.gif&quot; class=&quot;&quot;&gt;
+    
+    </summary>
+    
+    
+    
+      <category term="vim" scheme="https://amikai.github.io/tags/vim/"/>
+    
+      <category term="neovim" scheme="https://amikai.github.io/tags/neovim/"/>
+    
+  </entry>
   
   <entry>
     <title>你應該擴充的 text object</title>

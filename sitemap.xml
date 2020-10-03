@@ -88,6 +88,13 @@
 
   
   <url>
+    <loc>https://amikai.github.io/tags/golang/</loc>
+    <lastmod>2020-10-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://amikai.github.io/tags/vim/</loc>
     <lastmod>2020-10-03</lastmod>
     <changefreq>daily</changefreq>
@@ -96,13 +103,6 @@
   
   <url>
     <loc>https://amikai.github.io/tags/neovim/</loc>
-    <lastmod>2020-10-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://amikai.github.io/tags/golang/</loc>
     <lastmod>2020-10-03</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>

@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://amikai.github.io/"/>
-  <updated>2020-10-03T07:30:25.670Z</updated>
+  <updated>2020-10-03T07:39:09.850Z</updated>
   <id>https://amikai.github.io/</id>
   
   <author>
@@ -21,18 +21,20 @@
     <link href="https://amikai.github.io/2020/10/03/vim-commonly-used-motion/"/>
     <id>https://amikai.github.io/2020/10/03/vim-commonly-used-motion/</id>
     <published>2020-10-03T02:53:36.000Z</published>
-    <updated>2020-10-03T07:30:25.670Z</updated>
+    <updated>2020-10-03T07:39:09.850Z</updated>
     
     <summary type="html">
     
-      
-      
-        
-        
-          &lt;p&gt;看下圖，如果想將 &lt;code&gt;&amp;lt;expr&amp;gt;&lt;/code&gt; 改成 &lt;code&gt;&amp;lt;leader&amp;gt;&lt;/code&gt; 你會怎麼做呢?&lt;/p&gt;
-&lt;img
-        
-      
+      &lt;p&gt;看下圖，如果想將 &lt;code&gt;&amp;lt;expr&amp;gt;&lt;/code&gt; 改成 &lt;code&gt;&amp;lt;leader&amp;gt;&lt;/code&gt; 你會怎麼做呢?&lt;/p&gt;
+&lt;img data-src=&quot;/2020/10/03/vim-commonly-used-motion/question.png&quot; class=&quot;&quot;&gt;
+
+&lt;p&gt;通常我看過的幾種方式如下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;使用 &lt;code&gt;j&lt;/code&gt; 向下到 97 行，在使用 &lt;code&gt;l&lt;/code&gt; 到 target 並且開始編輯，這也是最糟的&lt;/li&gt;
+&lt;li&gt;target 的行數看起來離 window 中央行很近， 使用 &lt;code&gt;M&lt;/code&gt; 跳到 window 中央行，再使用 &lt;code&gt;h&lt;/code&gt; &lt;code&gt;j&lt;/code&gt; &lt;code&gt;k&lt;/code&gt; &lt;code&gt;l&lt;/code&gt; 到 target&lt;/li&gt;
+&lt;li&gt;使用 &lt;code&gt;:set number&lt;/code&gt; 列出行號， 按下 &lt;code&gt;97G&lt;/code&gt; 到達 97 行， &lt;code&gt;fe&lt;/code&gt; &lt;code&gt;;&lt;/code&gt; &lt;code&gt;;&lt;/code&gt; &lt;code&gt;;&lt;/code&gt;&lt;br&gt;註: &lt;code&gt;f{char}&lt;/code&gt; 找到此行的下一個字母、 &lt;code&gt;;&lt;/code&gt; 為重複上一個 &lt;code&gt;f&lt;/code&gt; 命令&lt;/li&gt;
+&lt;li&gt;使用 &lt;code&gt;/&lt;/code&gt; 搜尋 &lt;code&gt;expr&lt;/code&gt;，在使用 &lt;code&gt;n&lt;/code&gt; &lt;code&gt;n&lt;/code&gt; &lt;code&gt;n&lt;/code&gt; &lt;code&gt;n&lt;/code&gt; 到 target&lt;/li&gt;
+&lt;li&gt;&lt;del&gt;使用 &lt;code&gt;set mouse=n&lt;/code&gt;，用滑鼠點 target&lt;/del&gt;
     
     </summary>
     

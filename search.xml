@@ -130,6 +130,43 @@
       </tags>
   </entry>
   <entry>
+    <title>Golang 78 語法篇 - method set</title>
+    <url>/2020/07/07/golang78syntax2/</url>
+    <content><![CDATA[<p><code>method set</code>, <code>interface</code>, <code>auto deference or reference</code> 當這些語法綜合再一起使用時，很容易混淆，甚至寫出 bug code，這章我們就透過題目探討一下 <code>method set</code> 常常被大家誤會的地方。</p>
+<a href="/2020/07/03/golang78syntax/" title="Golang 78 語法篇 - interface">Golang 78 語法篇 - interface</a> Line 50 用到的概念就在這篇。
+
+
+<h1 id="題目"><a href="#題目" class="headerlink" title="題目"></a>題目</h1><p>請問以下程式輸出結果為何</p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	(&amp;Employee&#123;&#125;).DoWork()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>答案只有兩種方向:<br>    1. 無法編譯<br>    2. 印出 do work</p>
+<p>這個程式可以編譯，並且還印出 do work 但是為什麼呢？</p>
+ <a id="more"></a>
+
+<h1 id="Method-set"><a href="#Method-set" class="headerlink" title="Method set"></a>Method set</h1><p>在 receiver argument 和 receiver parameter 不一樣的情況下，直覺反應就是 <code>implicit dereference</code> 和 <code>implicit reference</code> 在背後會幫忙，但是這個寫法 (struct literal) 是不會有此情況的。</p>
+<p>既然沒有 <code>implicit dereference</code> 和 <code>implicit reference</code> 的支援，那一定存在其它機制使得這段 code 能正常編譯。</p>
+<p>以下從 <a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">Golang Specification</a>所截取的句子:</p>
+<p>The method set of the corresponding pointer type *T is the set of all methods declared with receiver *T or T (that is, it also contains the method set of T)</p>
+<p>以下是從 <a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang FAQ</a> 所截取的句子:</p>
+<p>As the Go specification says, the method set of a type T consists of all methods with receiver type T, while that of the corresponding pointer type *T consists of all methods with receiver *T or T. That means the method set of *T includes that of T, but not the reverse</p>
+<p>其實意思就是型態 T 的所有 method 包含了所有 receiver 型態是 T 的 method，這理所當然，看起來也像廢話，另一句才是關鍵，也是今日的重點：*T 型態的所有 method 包含了 receiver 型態是 T 及 *T 的 method。</p>
+<p>有了此結論我們就能知道 <code>*Employee</code> 的 method set 裡是有 <code>DoWork()</code>，所以編譯會過。</p>
+<p>那這就有趣了，再看一個延伸題，請問這段 code 編譯會不會過:</p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Worker <span class="keyword">interface</span> &#123;</span><br><span class="line">	DoWork()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> w Worker = &amp;Employee&#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>這段 code 問的其實就是 Employee 到底有沒有符合(satisfy) <code>Worker</code> 介面，根據剛剛所得出的結論， <code>*Employee</code> 的 method set 裡是有包含 <code>DoWork</code> 的，所以編譯是會過的。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
+<li><a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang Frequently Asked Questions (FAQ)</a></li>
+<li><a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">The Go Programming Language Specification - Method sets</a></li>
+</ol>
+]]></content>
+      <categories>
+        <category>golang78 syntax series</category>
+      </categories>
+      <tags>
+        <tag>golang</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Golang 78 語法篇 - interface</title>
     <url>/2020/07/03/golang78syntax/</url>
     <content><![CDATA[<p>Interface 可以說是 golang 的精髓之一。golang interface 特殊的語法以及概念也是工程師常常犯錯的地方。此題只是用來釐清自己的概念。</p>
@@ -171,43 +208,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Golang 78 語法篇 - method set</title>
-    <url>/2020/07/07/golang78syntax2/</url>
-    <content><![CDATA[<p><code>method set</code>, <code>interface</code>, <code>auto deference or reference</code> 當這些語法綜合再一起使用時，很容易混淆，甚至寫出 bug code，這章我們就透過題目探討一下 <code>method set</code> 常常被大家誤會的地方。</p>
-<a href="/2020/07/03/golang78syntax/" title="Golang 78 語法篇 - interface">Golang 78 語法篇 - interface</a> Line 50 用到的概念就在這篇。
-
-
-<h1 id="題目"><a href="#題目" class="headerlink" title="題目"></a>題目</h1><p>請問以下程式輸出結果為何</p>
-<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	(&amp;Employee&#123;&#125;).DoWork()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>答案只有兩種方向:<br>    1. 無法編譯<br>    2. 印出 do work</p>
-<p>這個程式可以編譯，並且還印出 do work 但是為什麼呢？</p>
- <a id="more"></a>
-
-<h1 id="Method-set"><a href="#Method-set" class="headerlink" title="Method set"></a>Method set</h1><p>在 receiver argument 和 receiver parameter 不一樣的情況下，直覺反應就是 <code>implicit dereference</code> 和 <code>implicit reference</code> 在背後會幫忙，但是這個寫法 (struct literal) 是不會有此情況的。</p>
-<p>既然沒有 <code>implicit dereference</code> 和 <code>implicit reference</code> 的支援，那一定存在其它機制使得這段 code 能正常編譯。</p>
-<p>以下從 <a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">Golang Specification</a>所截取的句子:</p>
-<p>The method set of the corresponding pointer type *T is the set of all methods declared with receiver *T or T (that is, it also contains the method set of T)</p>
-<p>以下是從 <a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang FAQ</a> 所截取的句子:</p>
-<p>As the Go specification says, the method set of a type T consists of all methods with receiver type T, while that of the corresponding pointer type *T consists of all methods with receiver *T or T. That means the method set of *T includes that of T, but not the reverse</p>
-<p>其實意思就是型態 T 的所有 method 包含了所有 receiver 型態是 T 的 method，這理所當然，看起來也像廢話，另一句才是關鍵，也是今日的重點：*T 型態的所有 method 包含了 receiver 型態是 T 及 *T 的 method。</p>
-<p>有了此結論我們就能知道 <code>*Employee</code> 的 method set 裡是有 <code>DoWork()</code>，所以編譯會過。</p>
-<p>那這就有趣了，再看一個延伸題，請問這段 code 編譯會不會過:</p>
-<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Worker <span class="keyword">interface</span> &#123;</span><br><span class="line">	DoWork()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> w Worker = &amp;Employee&#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>這段 code 問的其實就是 Employee 到底有沒有符合(satisfy) <code>Worker</code> 介面，根據剛剛所得出的結論， <code>*Employee</code> 的 method set 裡是有包含 <code>DoWork</code> 的，所以編譯是會過的。</p>
-<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
-<li><a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang Frequently Asked Questions (FAQ)</a></li>
-<li><a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">The Go Programming Language Specification - Method sets</a></li>
-</ol>
-]]></content>
-      <categories>
-        <category>golang78 syntax series</category>
-      </categories>
-      <tags>
-        <tag>golang</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>聊聊你在 vim 常用的移動方式</title>
     <url>/2020/10/03/vim-commonly-used-motion/</url>
     <content><![CDATA[<p>看下圖，如果想將 <code>&lt;expr&gt;</code> 改成 <code>&lt;leader&gt;</code> 你會怎麼做呢?</p>
@@ -223,7 +223,7 @@
 
 </li>
 </ol>
-<h1 id="Easymotion"><a href="#Easymotion" class="headerlink" title="Easymotion"></a>Easymotion</h1><p>easymotion 是解決此情境最好的方案之一，它提供了另一種搜尋方式，在搜尋目標之後，會將可能位置的抽換成其他字母，並高亮這些字母，再按下這些字母就可以跳到此位置 (之後簡稱為 label and jump 功能)。 easymotion 的設計都是加強內建的移動指令，只是跳轉到目標的方式變了，所以不需要擔心不會用。</p>
+<h1 id="Easymotion"><a href="#Easymotion" class="headerlink" title="Easymotion"></a>Easymotion</h1><p>easymotion 是解決此情境最好的方案之一，它提供了另一種搜尋方式，在搜尋目標之後，會將可能位置的抽換成其他字母，並高亮這些字母，再按下這些字母就可以跳到此位置 (之後簡稱為 label and jump 功能)。 easymotion 的設計就是加強內建的移動指令，只是跳轉到目標的方式變了，所以不需要擔心不會用。</p>
 <p>安裝</p>
 <figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">Plug <span class="string">'easymotion/vim-easymotion'</span></span><br></pre></td></tr></table></figure>
 <p>easymotion 的預設的 key mapping 過多，建議針對所需自行設定就好</p>
@@ -231,19 +231,19 @@
 <h2 id="Easymotion-bd-f"><a href="#Easymotion-bd-f" class="headerlink" title="Easymotion-bd-f"></a>Easymotion-bd-f</h2><p>將 <code>&lt;leader&gt;f</code> 映射到 easymotion-bd-f，很明顯的這個功能就是加強內建 f，差異在於：</p>
 <ul>
 <li>內建 f 只能單向向前搜尋，而且只能在此行</li>
-<li>easymotion-bd-f，bd 代表 bidirectional，也就是雙向搜尋，搜尋解國不限制在此行</li>
+<li>easymotion-bd-f，bd 代表 bidirectional，也就是雙向搜尋，搜尋結果不限制在此行</li>
 </ul>
 <figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">map</span> <span class="symbol">&lt;leader&gt;</span><span class="keyword">f</span> <span class="symbol">&lt;Plug&gt;</span>(easymotion-<span class="keyword">bd</span>-<span class="keyword">f</span>)</span><br></pre></td></tr></table></figure>
 <p>以下圖為使用 easymotion-bd-f 搜尋 e 字母的結果，還記得我們的 target 在 97 行嗎，所以按下 <code>ji</code> 即可跳到 target 了</p>
 <img data-src="/2020/10/03/vim-commonly-used-motion/easymotion-f.png" class="" title="easymotion-f">
 
 <h2 id="Easymotion-s2"><a href="#Easymotion-s2" class="headerlink" title="Easymotion-s2"></a>Easymotion-s2</h2><p>使用 easymotion-bd-f 搜尋常常遇到一個問題：只用一個字母搜尋為限制，導致可能的目標太多了，使得整個螢幕很亂。easymotion-s2 使用兩個字母最為限制去搜尋，這種方式看似不起眼，但聰明許多，比起 f 只需多按一個鍵，就能使目標更明確，使螢幕乾淨許多。</p>
-<p>將 <code>&lt;leader&gt;s</code> 映射到 easymotion-s2，用法和 easymotion-bd-f 類似只是多了一個字母。<br>經過映射使用方法為 <code>&lt;leader&gt;s{char}{char}</code></p>
+<p>將 <code>&lt;leader&gt;s</code> 映射到 easymotion-s2，用法和 easymotion-bd-f 類似只是多了一個字母。<br>經過映射後使用方法為 <code>&lt;leader&gt;s{char}{char}</code></p>
 <figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">map</span> <span class="symbol">&lt;leader&gt;</span>s <span class="symbol">&lt;Plug&gt;</span>(easymotion-s2)</span><br></pre></td></tr></table></figure>
 <p>下圖為使用 easymotion-s2 的搜尋 ex 字母的結果，螢幕乾淨很多，在按下 <code>k</code> 到達 target</p>
 <img data-src="/2020/10/03/vim-commonly-used-motion/easymotion-s2.png" class="" title="easymotion-s2">
 
-<h1 id="vim-sneak"><a href="#vim-sneak" class="headerlink" title="vim-sneak"></a>vim-sneak</h1><p>easymotion 的功能相當豐富，對於內建常用的移動指令 <code>f</code> <code>F</code> <code>t</code> <code>T</code> <code>w</code> <code>W</code> <code>b</code> <code>B</code> … 都有相對應的 key mapping，還有一堆 fancy 的功能，對我來說幾乎用不到，讓我最常使用的就是 easymotion-s2， 以功能上來看 <a href="https://github.com/justinmk/vim-sneak" target="_blank" rel="noopener">justinmk/vim-sneak</a> 就是簡易版的 easymotion。</p>
+<h1 id="vim-sneak"><a href="#vim-sneak" class="headerlink" title="vim-sneak"></a>vim-sneak</h1><p>easymotion 的功能相當豐富，對於內建常用的移動指令 <code>f</code> <code>F</code> <code>t</code> <code>T</code> <code>w</code> <code>W</code> <code>b</code> <code>B</code> … 都有相對應的擴增功能，還有一堆 fancy 的功能，對我來說幾乎用不到，讓我最常使用的就是 easymotion-s2， 以功能上來看 <a href="https://github.com/justinmk/vim-sneak" target="_blank" rel="noopener">justinmk/vim-sneak</a> 就是簡易版的 easymotion。</p>
 <p>安裝 vim-sneak</p>
 <figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">Plug <span class="string">'justinmk/vim-sneak'</span></span><br></pre></td></tr></table></figure>
 
@@ -251,9 +251,9 @@
 <figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">g:sneak</span>#label = <span class="number">1</span></span><br></pre></td></tr></table></figure>
 
 
-<p>vim-sneak 提供了四個按鍵 <code>&lt;Plug&gt;Sneak_f</code> <code>&lt;Plug&gt;Sneak_F</code> <code>&lt;Plug&gt;Sneak_t</code> <code>&lt;Plug&gt;Sneak_T</code> 類似於 <code>f</code> <code>F</code> <code>t</code> <code>T</code>，和內建的差異是這些按鍵搜尋的是兩個字元，和 easymotion-s2 唯一有差異的就是沒有雙向搜尋</p>
+<p>vim-sneak 提供了四個按鍵 <code>&lt;Plug&gt;Sneak_f</code> <code>&lt;Plug&gt;Sneak_F</code> <code>&lt;Plug&gt;Sneak_t</code> <code>&lt;Plug&gt;Sneak_T</code> 類似於 <code>f</code> <code>F</code> <code>t</code> <code>T</code>，和內建的差異就是這些按鍵搜尋的是兩個字元，和 easymotion-s2 的差異就是沒有雙向搜尋</p>
 <figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">map</span> <span class="symbol">&lt;leader&gt;</span><span class="keyword">f</span> <span class="symbol">&lt;Plug&gt;</span>Sneak_f</span><br><span class="line"><span class="keyword">map</span> <span class="symbol">&lt;leader&gt;</span>F <span class="symbol">&lt;Plug&gt;</span>Sneak_F</span><br><span class="line"><span class="keyword">map</span> <span class="symbol">&lt;leader&gt;</span>t <span class="symbol">&lt;Plug&gt;</span>Sneak_t</span><br><span class="line"><span class="keyword">map</span> <span class="symbol">&lt;leader&gt;</span>T <span class="symbol">&lt;Plug&gt;</span>Sneak_T</span><br></pre></td></tr></table></figure>
-<p>使用的方法和 easymotion-s2 幾乎一樣，就不在做展示。</p>
+<p>使用的方法和 easymotion-s2 幾乎一樣，就不再做展示。</p>
 <p>在 <a href="https://www.reddit.com/r/vim/comments/2ydw6t/large_plugins_vs_small_easymotion_vs_sneak" target="_blank" rel="noopener">Large plugins vs. small (EasyMotion vs. Sneak)</a> 討論串裡，vim-sneak 作者講述了 vim-sneak 和 easymotion 的實作差異，在這就不仔細探討。</p>
 <h1 id="結語"><a href="#結語" class="headerlink" title="結語"></a>結語</h1><p>本章透過一個簡單的跳轉問題，引出 easymotion plugin 的特色，與其說 easymotion 是一個 plugin，其功能的豐富程度，我更會想把它稱為 motion 框架，最有價值的功能就是 label and jump 的功能，提供了一種全新的跳轉方式，大大的提升了 cursor 的移動效率。</p>
 <p>建議先使用 easymotion 使用過一段時間察覺自己的使用習慣 (一定得查看 <code>:help easymotion</code>)，如果嫌棄其臃腫，在針對自己的使用習慣去查找類似的 plugin，以我來說最常使用的就是 easymotion-s2 ，所以我就選用了 <a href="https://github.com/justinmk/vim-sneak" target="_blank" rel="noopener">justinmk/vim-sneak</a>，功能類似 easymotion-s2 但相對於 easymotion 輕量許多。</p>
@@ -378,29 +378,6 @@
       </tags>
   </entry>
   <entry>
-    <title>vim 高亮 yank 區域</title>
-    <url>/2020/09/29/vim-tips-highlight-yank-region/</url>
-    <content><![CDATA[<p><code>y</code> 是在 vim 裡最常使用的使用的 operator 之一，使用 <code>y</code> operator 將會執行 yank 動作，但它無法像 <code>c</code> (change) 和 <code>d</code> (delete) operator 使用之後馬上就知道對文件編輯了什麼。yank 動作是沒有反饋的，按了 <code>yiw</code> 複製 word 之後，你也無法確定是不是按對了，還要使用 <code>:reg</code> 檢視，頗麻煩的。</p>
-<p>解決方案：在使用 yank operator 之後，高亮複製區域短暫的時間，就能確認複製的區域有沒有誤。以下圖例為，在 23 行按下 <code>yy</code>, 在 24 行的 return 上按下 <code>yiw</code></p>
-<img data-src="/2020/09/29/vim-tips-highlight-yank-region/cover.gif" class="">
- <a id="more"></a>
-
-<p>在 neovim 0.5 裡達到這件事相當簡單，把以下加近</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">autocmd</span> TextYankPost * silent! <span class="keyword">lua</span> <span class="keyword">vim</span>.<span class="keyword">highlight</span>.on_yank&#123;higroup=<span class="string">"IncSearch"</span>, timeout=<span class="number">300</span>&#125;</span><br></pre></td></tr></table></figure>
-
-<p>如果是使用 vim 也可以用 <a href="https://github.com/machakann/vim-highlightedyank" target="_blank" rel="noopener">vim-highlightedyank</a> 套件達成</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">Plug <span class="string">'machakann/vim-highlightedyank'</span></span><br><span class="line"><span class="keyword">let</span> <span class="variable">g:highlightedyank_highlight_duration</span> = <span class="number">300</span></span><br><span class="line"><span class="keyword">if</span> !exists(<span class="string">'##TextYankPost'</span>)</span><br><span class="line">  <span class="keyword">map</span> <span class="keyword">y</span> <span class="symbol">&lt;Plug&gt;</span>(highlightedyank)</span><br><span class="line"><span class="keyword">endif</span></span><br></pre></td></tr></table></figure>
-<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
-<li><a href="https://github.com/neovim/neovim/pull/12279" target="_blank" rel="noopener">https://github.com/neovim/neovim/pull/12279</a></li>
-<li>neovim <code>:help lua-highlight</code></li>
-</ul>
-]]></content>
-      <tags>
-        <tag>vim</tag>
-        <tag>neovim</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>你應該擴充的 text object</title>
     <url>/2020/09/22/vim-text-object/</url>
     <content><![CDATA[<p>vim 高效率編輯的背後，operator, motion, text object 的配合功不可沒。</p>
@@ -516,6 +493,29 @@
 <li><a href="https://codeinthehole.com/tips/vim-text-objects/" target="_blank" rel="noopener">https://codeinthehole.com/tips/vim-text-objects/</a></li>
 <li><a href="https://www.tandrewnichols.me/motions-operators-text-objects-introduction/" target="_blank" rel="noopener">https://www.tandrewnichols.me/motions-operators-text-objects-introduction/</a></li>
 <li><a href="https://neovim.io/doc/user/motion.html" target="_blank" rel="noopener"><code>:help &#39;motion.txt&#39;</code></a></li>
+</ul>
+]]></content>
+      <tags>
+        <tag>vim</tag>
+        <tag>neovim</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>vim 高亮 yank 區域</title>
+    <url>/2020/09/29/vim-tips-highlight-yank-region/</url>
+    <content><![CDATA[<p><code>y</code> 是在 vim 裡最常使用的使用的 operator 之一，使用 <code>y</code> operator 將會執行 yank 動作，但它無法像 <code>c</code> (change) 和 <code>d</code> (delete) operator 使用之後馬上就知道對文件編輯了什麼。yank 動作是沒有反饋的，按了 <code>yiw</code> 複製 word 之後，你也無法確定是不是按對了，還要使用 <code>:reg</code> 檢視，頗麻煩的。</p>
+<p>解決方案：在使用 yank operator 之後，高亮複製區域短暫的時間，就能確認複製的區域有沒有誤。以下圖例為，在 23 行按下 <code>yy</code>, 在 24 行的 return 上按下 <code>yiw</code></p>
+<img data-src="/2020/09/29/vim-tips-highlight-yank-region/cover.gif" class="">
+ <a id="more"></a>
+
+<p>在 neovim 0.5 裡達到這件事相當簡單，把以下加近</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">autocmd</span> TextYankPost * silent! <span class="keyword">lua</span> <span class="keyword">vim</span>.<span class="keyword">highlight</span>.on_yank&#123;higroup=<span class="string">"IncSearch"</span>, timeout=<span class="number">300</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果是使用 vim 也可以用 <a href="https://github.com/machakann/vim-highlightedyank" target="_blank" rel="noopener">vim-highlightedyank</a> 套件達成</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">Plug <span class="string">'machakann/vim-highlightedyank'</span></span><br><span class="line"><span class="keyword">let</span> <span class="variable">g:highlightedyank_highlight_duration</span> = <span class="number">300</span></span><br><span class="line"><span class="keyword">if</span> !exists(<span class="string">'##TextYankPost'</span>)</span><br><span class="line">  <span class="keyword">map</span> <span class="keyword">y</span> <span class="symbol">&lt;Plug&gt;</span>(highlightedyank)</span><br><span class="line"><span class="keyword">endif</span></span><br></pre></td></tr></table></figure>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://github.com/neovim/neovim/pull/12279" target="_blank" rel="noopener">https://github.com/neovim/neovim/pull/12279</a></li>
+<li>neovim <code>:help lua-highlight</code></li>
 </ul>
 ]]></content>
       <tags>

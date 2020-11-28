@@ -130,43 +130,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Golang 78 語法篇 - method set</title>
-    <url>/2020/07/07/golang78syntax2/</url>
-    <content><![CDATA[<p><code>method set</code>, <code>interface</code>, <code>auto deference or reference</code> 當這些語法綜合再一起使用時，很容易混淆，甚至寫出 bug code，這章我們就透過題目探討一下 <code>method set</code> 常常被大家誤會的地方。</p>
-<a href="/2020/07/03/golang78syntax/" title="Golang 78 語法篇 - interface">Golang 78 語法篇 - interface</a> Line 50 用到的概念就在這篇。
-
-
-<h1 id="題目"><a href="#題目" class="headerlink" title="題目"></a>題目</h1><p>請問以下程式輸出結果為何</p>
-<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	(&amp;Employee&#123;&#125;).DoWork()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>答案只有兩種方向:<br>    1. 無法編譯<br>    2. 印出 do work</p>
-<p>這個程式可以編譯，並且還印出 do work 但是為什麼呢？</p>
- <a id="more"></a>
-
-<h1 id="Method-set"><a href="#Method-set" class="headerlink" title="Method set"></a>Method set</h1><p>在 receiver argument 和 receiver parameter 不一樣的情況下，直覺反應就是 <code>implicit dereference</code> 和 <code>implicit reference</code> 在背後會幫忙，但是這個寫法 (struct literal) 是不會有此情況的。</p>
-<p>既然沒有 <code>implicit dereference</code> 和 <code>implicit reference</code> 的支援，那一定存在其它機制使得這段 code 能正常編譯。</p>
-<p>以下從 <a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">Golang Specification</a>所截取的句子:</p>
-<p>The method set of the corresponding pointer type *T is the set of all methods declared with receiver *T or T (that is, it also contains the method set of T)</p>
-<p>以下是從 <a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang FAQ</a> 所截取的句子:</p>
-<p>As the Go specification says, the method set of a type T consists of all methods with receiver type T, while that of the corresponding pointer type *T consists of all methods with receiver *T or T. That means the method set of *T includes that of T, but not the reverse</p>
-<p>其實意思就是型態 T 的所有 method 包含了所有 receiver 型態是 T 的 method，這理所當然，看起來也像廢話，另一句才是關鍵，也是今日的重點：*T 型態的所有 method 包含了 receiver 型態是 T 及 *T 的 method。</p>
-<p>有了此結論我們就能知道 <code>*Employee</code> 的 method set 裡是有 <code>DoWork()</code>，所以編譯會過。</p>
-<p>那這就有趣了，再看一個延伸題，請問這段 code 編譯會不會過:</p>
-<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Worker <span class="keyword">interface</span> &#123;</span><br><span class="line">	DoWork()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> w Worker = &amp;Employee&#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>這段 code 問的其實就是 Employee 到底有沒有符合(satisfy) <code>Worker</code> 介面，根據剛剛所得出的結論， <code>*Employee</code> 的 method set 裡是有包含 <code>DoWork</code> 的，所以編譯是會過的。</p>
-<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
-<li><a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang Frequently Asked Questions (FAQ)</a></li>
-<li><a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">The Go Programming Language Specification - Method sets</a></li>
-</ol>
-]]></content>
-      <categories>
-        <category>golang78 syntax series</category>
-      </categories>
-      <tags>
-        <tag>golang</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Golang 78 語法篇 - interface</title>
     <url>/2020/07/03/golang78syntax/</url>
     <content><![CDATA[<p>Interface 可以說是 golang 的精髓之一。golang interface 特殊的語法以及概念也是工程師常常犯錯的地方。此題只是用來釐清自己的概念。</p>
@@ -198,6 +161,200 @@
 <h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
 <li><a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">https://golang.org/ref/spec#Method_sets</a></li>
 <li><a href="https://stackoverflow.com/questions/33587227/method-sets-pointer-vs-value-receiver" target="_blank" rel="noopener">https://stackoverflow.com/questions/33587227/method-sets-pointer-vs-value-receiver</a></li>
+</ol>
+]]></content>
+      <categories>
+        <category>golang78 syntax series</category>
+      </categories>
+      <tags>
+        <tag>golang</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>在 (neo)vim 裡 C 語言程式碼導覽技巧</title>
+    <url>/2020/11/28/vim-c-env-move/</url>
+    <content><![CDATA[<p>現代的專案開發，很少在從無到有打造，大部分都是基於現有的程式之上繼續開發或維護，進入專案之後，通常第一件事就是大量閱讀程式碼理清專案的整個脈絡，才開始著手寫 code，所以好的程式碼導覽技巧將會帶你上天堂。</p>
+<p>我將大部分的程式碼導覽情境大致拆成了三種情況：</p>
+<ul>
+<li>基本的跳轉：<ul>
+<li><code>#if</code> <code>#endif</code> 中間的程式碼太長，想要跳轉到成對的 <code>#if</code> <code>#endif</code> </li>
+<li>cursor 在 {…} block 裡， 這個 block 又臭又長，想快速跳轉 block 的開頭和結尾</li>
+<li>註解長篇大論，想快速跳到註解的開頭或結尾</li>
+</ul>
+</li>
+<li>尋找專案下檔案 (可透過設定 path option 解決)<ul>
+<li>跳轉到標頭檔</li>
+<li>跳轉到指定檔案</li>
+</ul>
+</li>
+<li>使用 source code tagging system 快速挑轉到 function 定義及特定 symbol 等等：<br>專案相當大的時候，source code tagging system 相當好用，可以快速找到定位，也不會花掉太多的資源，比起 LSP 的跳轉定義，是較輕量的選擇。</li>
+</ul>
+<p>本篇依據上述三種情境，一一講述。<br> <a id="more"></a></p>
+<h1 id="常用跳轉操作"><a href="#常用跳轉操作" class="headerlink" title="常用跳轉操作"></a>常用跳轉操作</h1><ul>
+<li><p><code>%</code></p>
+<ul>
+<li>跳到成對的括號</li>
+<li>如果註解是 <code>/*...*/</code>，跳到成對的註解符號</li>
+<li>在成對的 <code>#if</code>, <code>#ifdef</code>, <code>#else</code>, <code>#elif</code>, <code>#endif</code> 之中跳轉，這相當重要，如果 code 很長, if else macro 又是巢狀的，這招可以讓你少迷路好幾次</li>
+</ul>
+</li>
+<li><p><code>[{</code> <code>]}</code></p>
+<ul>
+<li><code>[{</code>：若 cursor 在 {…} 區塊中，跳到此區塊的 {</li>
+<li><code>]}</code>：若 cursor 在 {…} 區塊中，跳到此區塊的 }</li>
+</ul>
+</li>
+<li><p><code>[*</code> <code>]*</code></p>
+<ul>
+<li><code>[*</code>：找到上一個 /*</li>
+<li><code>]*</code>：找到下一個 */</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><p><code>[#</code> <code>]#</code><br>  用法和 <code>[{</code> <code>]}</code> 類似，但是針對的是 <code>#</code><br>  在 line2 區塊 <code>[{</code> 跳到 line1, <code>]}</code> 跳到 line3<br>  在 line4 區塊 <code>[{</code> 跳到 line3, <code>]}</code> 跳到 line5<br>  在 line6 區塊 <code>[{</code> 跳到 line5, <code>]}</code> 跳到 line7</p>
+  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> TEST</span></span><br><span class="line"><span class="comment">// line2</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">elif</span> TEST2</span></span><br><span class="line"><span class="comment">// line4</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line"><span class="comment">// line6</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p>  若 cursor 在 #else…#endif 區塊中，跳到 #else</p>
+</li>
+</ul>
+<h1 id="透過-path-設定，快速查找相關檔案"><a href="#透過-path-設定，快速查找相關檔案" class="headerlink" title="透過 path 設定，快速查找相關檔案"></a>透過 path 設定，快速查找相關檔案</h1><p>看看以下圖片，將 cursor 移動到程式碼標頭檔的位置 (stdio.h)，按下 <code>gf</code>，bang! 你跳到 stdio.h 標頭檔了</p>
+<img data-src="/2020/11/28/vim-c-env-move/vim_gf.gif" class="">
+
+
+<p>再來看看 <code>:find</code> 指令，我想找出 stdlib.h 標頭檔，使用 <code>:find stdlib.h</code>, 就跳到 stdlib.h 啦</p>
+<p>我們來看看 vim 到底怎麼實現這個魔法的：<br>其實 vim 是藉由 <code>path</code> 這個 option 去搜尋的 (詳見 <code>:help &#39;path&#39;</code>)，path 這個值由許多路徑組成並由逗號隔開，在 nix 系統裡 vim 對 path 預設的值是 </p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">.,/usr/include,,</span><br></pre></td></tr></table></figure>
+<p>可以看到三個值：</p>
+<ul>
+<li><code>.</code>： 當前檔案所在的目錄</li>
+<li><code>/usr/include</code>： 很顯然找到 <code>gf</code> 找到的 stdio.h 和 <code>:find</code> 找到的 stdlib.h 是由這個目錄找出來的</li>
+<li>empty string：工作目錄 (current work directory, 通常是 vim 開啟的位置，如果你沒用 <code>:cd</code> 的話)</li>
+</ul>
+<p>所以可以把自己常用的標頭檔所在目錄加入 path ！ 舉個例子 <code>/usr/local/include</code> 也是很常放標頭檔的路徑，所以我把它加入到 path</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">set</span> path+=/usr/local/include</span><br></pre></td></tr></table></figure>
+
+
+<p>註: <code>.</code> 和 empty string 的差別請看：<a href="https://vi.stackexchange.com/questions/5998/is-vims-default-path-option-redundant" target="_blank" rel="noopener">is-vims-default-path-option-redundant</a></p>
+<p><code>**</code> 算是一個蠻好用的值，它會對路徑做 recursive 的解析，你可能會使用到它，詳細的規則可以看 <code>:help starstar</code></p>
+<h1 id="source-code-tagging-system-和-vim"><a href="#source-code-tagging-system-和-vim" class="headerlink" title="source code tagging system 和 vim"></a>source code tagging system 和 vim</h1><p>2020 年 Linux kernel 原始碼規模已經達到 2780 萬行，規模如此之龐大，Linux 的程式開發人員到底是怎麼開發的，隨便想找一個 function 定義都相當吃力，總不能用 grep 慢慢去找吧!這時候 source code tagging system 就派上用場了，它可以對專案所有的 symbol 產生索引檔，需要查找目標時就藉由這些索引檔快速查找位置。概念其實就是字典的索引，字典這麼大一本不會有人從頭掃到尾，都是直接翻到字典最後面的索引快速找到目標。</p>
+<p>這些 source code tagging system，通常會產生索引檔並且提供一個介面，讓編輯器使用它們快速在程式碼內定位。</p>
+<p>接下來將逐一介紹 cscope, gtags, ctags 等等三個 source code tagging system 在 vim 裡的基本使用方式。</p>
+<h1 id="Cscope"><a href="#Cscope" class="headerlink" title="Cscope"></a>Cscope</h1><h2 id="Cscope-簡介"><a href="#Cscope-簡介" class="headerlink" title="Cscope 簡介"></a>Cscope 簡介</h2><p>cscope 官網聲稱可以做到以下事情：</p>
+<ul>
+<li>查詢所有使用到這個 symbol 的地方</li>
+<li>查詢全域變數</li>
+<li>查詢 function 在哪被呼叫</li>
+<li>查詢這個 function 呼叫了誰</li>
+<li>使用字串查詢找到目標</li>
+<li>使用 egrep pattern 尋找目標</li>
+<li>快速尋找專案下檔案</li>
+<li>查看哪個檔案 include 當前檔案</li>
+</ul>
+<p>cscope 指令常用選項</p>
+<ul>
+<li>b：只產生索引檔案，不進入互動查詢介面</li>
+<li>q：產生 cscope.in.out 和 cscope.po.out文件，加快 cscope 的索引速度 </li>
+<li>k：產生索引檔案时，不搜尋 /usr/include</li>
+<li>R：遞迴搜尋子目錄</li>
+</ul>
+<h2 id="Cscope-和-vim"><a href="#Cscope-和-vim" class="headerlink" title="Cscope 和 vim"></a>Cscope 和 vim</h2><p>在專案目錄產生索引檔案:</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">$ cscope -bkqR</span><br></pre></td></tr></table></figure>
+<p>會產生三個檔案 <code>cscope.in.out</code> <code>cscope.out</code> <code>cscope.po.out</code></p>
+<p>進入 vim 之後可以透過 <code>cs</code> 查看 cscope 在 vim 裡的使用方式</p>
+<img data-src="/2020/11/28/vim-c-env-move/vim_cscope.png" class="">
+
+
+<p>讓 vim 知道 cscope 的路徑</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">set</span> cscopeprg=/path/<span class="keyword">to</span>/<span class="keyword">cscope</span></span><br></pre></td></tr></table></figure>
+
+<p>指定 cscope 索引檔案，讓 vim 知道要用哪個索引檔案查詢：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">cs</span> <span class="built_in">add</span> <span class="keyword">cscope</span>.out</span><br></pre></td></tr></table></figure>
+
+<p>接下來就可以使用以下方式查詢 (xxx 為想搜尋的目標):</p>
+<ul>
+<li><code>:cs find a xxx</code> 查尋 xxx 被賦值的地方</li>
+<li><code>:cs find c xxx</code> 查尋所有呼叫 xxx function 的地方</li>
+<li><code>:cs find d xxx</code> 查尋 xxx function 呼叫的所有函數</li>
+<li><code>:cs find e xxx</code> 使用 egrep pattern 查詢</li>
+<li><code>:cs find f xxx</code> 找出 xxx 檔案在哪裡</li>
+<li><code>:cs find g xxx</code> 查尋 xxx 所定義的地方 (通常最常用的是這個)</li>
+<li><code>:cs find i xxx</code> 查尋所有 inlcude xxx 檔案的地方</li>
+<li><code>:cs find s xxx</code> 查尋所有 xxx symbol 出現的地方</li>
+<li><code>:cs find t xxx</code> 查詢 xxx 字串出現的地方，其實搜尋效果就類似 grep </li>
+</ul>
+<p>記得查詢完的結果可以用 <code>:cw</code>, <code>:copen</code> 在 quickfix window 列出：</p>
+<h1 id="GNU-GLOBAL-gtags"><a href="#GNU-GLOBAL-gtags" class="headerlink" title="GNU GLOBAL (gtags)"></a>GNU GLOBAL (gtags)</h1><p>由 GNU GLOBAL 由 GNU 所開發的 soure code tagging system，本身支持四種語言，透過 Pygments 和 Universal Ctags 的 parser 可以支持其他 25 種語言，支援 incremental update，原始碼更動後，只會對改變的地方索引，不會重新索引，這對龐大的專案有很大的幫助。另外 gtags 提供了 cscope 相容的互動介面，叫做 gtags-cscope，讓你用起來像 cscope，但背後其實是 gtags 的索引檔案。</p>
+<p>在專案目錄產生索引檔案：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ gtags</span><br></pre></td></tr></table></figure>
+
+<p>讓 vim 知道 gtags-cscope 路徑：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">set</span> cscopeprg=/path/<span class="keyword">to</span>/gtsgs-<span class="keyword">cscope</span></span><br></pre></td></tr></table></figure>
+
+<p>指定 gtags 索引檔案，讓 vim 知道要用哪個索引檔案查詢：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">cs</span> <span class="built_in">add</span> GTAGS</span><br></pre></td></tr></table></figure>
+<p>借下來就可以用和 cscope 一樣的方式查詢，除了 <code>:cs find d</code>，其他皆支援 </p>
+<h1 id="Ctags"><a href="#Ctags" class="headerlink" title="Ctags"></a>Ctags</h1><h2 id="Ctags-簡介"><a href="#Ctags-簡介" class="headerlink" title="Ctags 簡介"></a>Ctags 簡介</h2><p>最早的 Ctag 在 BSD 上實現，版本變革的歷史脈絡我不是相當清楚，查不太到資料。<br>現在普及的版本是 Exuberant Ctags，一開始和 vim 是一包軟體，一起發布，但在 vim6 之後獨立成兩個專案，從這裏可看出它一定和 vim 兼容良好，但此版本在 2009 年之後已不再維護。建議使用Exuberant Ctags 所 fork 的版本 Universal Ctags，目前還在維護和開發當中。</p>
+<h2 id="Ctags-和-vim"><a href="#Ctags-和-vim" class="headerlink" title="Ctags 和 vim"></a>Ctags 和 vim</h2><p>在專案下生成索引檔案，可以看到目錄裡有 <code>tags</code> 檔案</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ctags -R *</span><br></pre></td></tr></table></figure>
+
+
+<p>指定 tags 索引檔案，讓 vim 知道要用哪個索引檔案查詢：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">set</span> <span class="keyword">tags</span>=<span class="keyword">tags</span></span><br></pre></td></tr></table></figure>
+
+<p>再來就可以使用:</p>
+<ul>
+<li><code>Ctrl + ]</code>: 跳到定義，如果有多個匹配則會跳到第一個</li>
+<li><code>Ctrl + T</code>: 跳回原本的地方</li>
+</ul>
+<p>每次用 <code>ctrl + ]</code> 跳轉到定義，vim 就會把這位置推到 tag stack 裡，每次 <code>ctrl + T</code> 跳回原來的地方，vim 就會從 tag stack 裡 pop 位置出來，我們可以使用 <code>:tags</code> 看到 tag stack 裡的內容。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><p><a href="https://dev.to/iggredible/how-to-use-tags-in-vim-to-jump-to-definitions-quickly-2g28" target="_blank" rel="noopener">https://dev.to/iggredible/how-to-use-tags-in-vim-to-jump-to-definitions-quickly-2g28</a></p>
+</li>
+<li><p><a href="http://praton.me/2020/04/11/Exploring-kernel-code-with-vim.html" target="_blank" rel="noopener">http://praton.me/2020/04/11/Exploring-kernel-code-with-vim.html</a></p>
+</li>
+<li><p><a href="https://neovim.io/doc/user/usr_29.html" target="_blank" rel="noopener">:help usr_29.txt</a></p>
+</li>
+<li><p><a href="https://neovim.io/doc/user/usr_30.html" target="_blank" rel="noopener">:help usr_30.txt</a></p>
+</li>
+<li><p><a href="https://neovim.io/doc/user/tagsrch.html" target="_blank" rel="noopener">:help tagsrch.txt</a></p>
+</li>
+</ul>
+]]></content>
+      <tags>
+        <tag>vim</tag>
+        <tag>neovim</tag>
+        <tag>c</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Golang 78 語法篇 - method set</title>
+    <url>/2020/07/07/golang78syntax2/</url>
+    <content><![CDATA[<p><code>method set</code>, <code>interface</code>, <code>auto deference or reference</code> 當這些語法綜合再一起使用時，很容易混淆，甚至寫出 bug code，這章我們就透過題目探討一下 <code>method set</code> 常常被大家誤會的地方。</p>
+<a href="/2020/07/03/golang78syntax/" title="Golang 78 語法篇 - interface">Golang 78 語法篇 - interface</a> Line 50 用到的概念就在這篇。
+
+
+<h1 id="題目"><a href="#題目" class="headerlink" title="題目"></a>題目</h1><p>請問以下程式輸出結果為何</p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	(&amp;Employee&#123;&#125;).DoWork()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>答案只有兩種方向:<br>    1. 無法編譯<br>    2. 印出 do work</p>
+<p>這個程式可以編譯，並且還印出 do work 但是為什麼呢？</p>
+ <a id="more"></a>
+
+<h1 id="Method-set"><a href="#Method-set" class="headerlink" title="Method set"></a>Method set</h1><p>在 receiver argument 和 receiver parameter 不一樣的情況下，直覺反應就是 <code>implicit dereference</code> 和 <code>implicit reference</code> 在背後會幫忙，但是這個寫法 (struct literal) 是不會有此情況的。</p>
+<p>既然沒有 <code>implicit dereference</code> 和 <code>implicit reference</code> 的支援，那一定存在其它機制使得這段 code 能正常編譯。</p>
+<p>以下從 <a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">Golang Specification</a>所截取的句子:</p>
+<p>The method set of the corresponding pointer type *T is the set of all methods declared with receiver *T or T (that is, it also contains the method set of T)</p>
+<p>以下是從 <a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang FAQ</a> 所截取的句子:</p>
+<p>As the Go specification says, the method set of a type T consists of all methods with receiver type T, while that of the corresponding pointer type *T consists of all methods with receiver *T or T. That means the method set of *T includes that of T, but not the reverse</p>
+<p>其實意思就是型態 T 的所有 method 包含了所有 receiver 型態是 T 的 method，這理所當然，看起來也像廢話，另一句才是關鍵，也是今日的重點：*T 型態的所有 method 包含了 receiver 型態是 T 及 *T 的 method。</p>
+<p>有了此結論我們就能知道 <code>*Employee</code> 的 method set 裡是有 <code>DoWork()</code>，所以編譯會過。</p>
+<p>那這就有趣了，再看一個延伸題，請問這段 code 編譯會不會過:</p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Worker <span class="keyword">interface</span> &#123;</span><br><span class="line">	DoWork()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> w Worker = &amp;Employee&#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>這段 code 問的其實就是 Employee 到底有沒有符合(satisfy) <code>Worker</code> 介面，根據剛剛所得出的結論， <code>*Employee</code> 的 method set 裡是有包含 <code>DoWork</code> 的，所以編譯是會過的。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
+<li><a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang Frequently Asked Questions (FAQ)</a></li>
+<li><a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">The Go Programming Language Specification - Method sets</a></li>
 </ol>
 ]]></content>
       <categories>

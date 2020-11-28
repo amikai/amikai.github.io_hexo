@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://amikai.github.io/"/>
-  <updated>2020-10-03T11:18:58.050Z</updated>
+  <updated>2020-11-28T17:19:30.727Z</updated>
   <id>https://amikai.github.io/</id>
   
   <author>
@@ -15,6 +15,45 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>在 (neo)vim 裡 C 語言程式碼導覽技巧</title>
+    <link href="https://amikai.github.io/2020/11/28/vim-c-env-move/"/>
+    <id>https://amikai.github.io/2020/11/28/vim-c-env-move/</id>
+    <published>2020-11-28T13:50:57.000Z</published>
+    <updated>2020-11-28T17:19:30.727Z</updated>
+    
+    <summary type="html">
+    
+      &lt;p&gt;現代的專案開發，很少在從無到有打造，大部分都是基於現有的程式之上繼續開發或維護，進入專案之後，通常第一件事就是大量閱讀程式碼理清專案的整個脈絡，才開始著手寫 code，所以好的程式碼導覽技巧將會帶你上天堂。&lt;/p&gt;
+&lt;p&gt;我將大部分的程式碼導覽情境大致拆成了三種情況：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;基本的跳轉：&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;#if&lt;/code&gt; &lt;code&gt;#endif&lt;/code&gt; 中間的程式碼太長，想要跳轉到成對的 &lt;code&gt;#if&lt;/code&gt; &lt;code&gt;#endif&lt;/code&gt; &lt;/li&gt;
+&lt;li&gt;cursor 在 {…} block 裡， 這個 block 又臭又長，想快速跳轉 block 的開頭和結尾&lt;/li&gt;
+&lt;li&gt;註解長篇大論，想快速跳到註解的開頭或結尾&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;尋找專案下檔案 (可透過設定 path option 解決)&lt;ul&gt;
+&lt;li&gt;跳轉到標頭檔&lt;/li&gt;
+&lt;li&gt;跳轉到指定檔案&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;使用 source code tagging system 快速挑轉到 function 定義及特定 symbol 等等：&lt;br&gt;專案相當大的時候，source code tagging system 相當好用，可以快速找到定位，也不會花掉太多的資源，比起 LSP 的跳轉定義，是較輕量的選擇。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;本篇依據上述三種情境，一一講述。&lt;br&gt;
+    
+    </summary>
+    
+    
+    
+      <category term="vim" scheme="https://amikai.github.io/tags/vim/"/>
+    
+      <category term="neovim" scheme="https://amikai.github.io/tags/neovim/"/>
+    
+      <category term="c" scheme="https://amikai.github.io/tags/c/"/>
+    
+  </entry>
   
   <entry>
     <title>聊聊你在 vim 常用的移動方式</title>

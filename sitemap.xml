@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://amikai.github.io/2020/11/28/vim-c-env-move/</loc>
+    
+    <lastmod>2020-11-28</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://amikai.github.io/2020/10/03/vim-commonly-used-motion/</loc>
     
     <lastmod>2020-10-03</lastmod>
@@ -81,7 +88,7 @@
 
   <url>
     <loc>https://amikai.github.io/</loc>
-    <lastmod>2020-10-03</lastmod>
+    <lastmod>2020-11-28</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -89,21 +96,28 @@
   
   <url>
     <loc>https://amikai.github.io/tags/golang/</loc>
-    <lastmod>2020-10-03</lastmod>
+    <lastmod>2020-11-28</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://amikai.github.io/tags/vim/</loc>
-    <lastmod>2020-10-03</lastmod>
+    <lastmod>2020-11-28</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://amikai.github.io/tags/neovim/</loc>
-    <lastmod>2020-10-03</lastmod>
+    <lastmod>2020-11-28</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://amikai.github.io/tags/c/</loc>
+    <lastmod>2020-11-28</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
@@ -112,7 +126,7 @@
   
   <url>
     <loc>https://amikai.github.io/categories/golang78syntax/</loc>
-    <lastmod>2020-10-03</lastmod>
+    <lastmod>2020-11-28</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>

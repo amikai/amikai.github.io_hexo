@@ -3,24 +3,18 @@
   <entry>
     <title>Dockerfile -  Multi-stage build 筆記</title>
     <url>/2021/03/01/docker-multi-stage-build/</url>
-    <content><![CDATA[<p> docker 在專案部署上解掉了環境不同所多出的成本和問題。除了部署之外， 專案開發流程複雜時，團隊也可以使用 docker 統一開發流程，加速開發的速度。</p>
-<p> 此篇將以 go 語言專案為例，使用 docker 對此專案進行代碼檢查、測試、編譯，從建構最簡單的 Dockerfile 撰寫起，一步一步從版本一改善到版本三也就是 multi-stage build 的版本。</p>
-<p>此檔案為最終完成版，並且可以透過 git 記錄看到版本一和版本二的內容。<br> <a href="/2021/03/01/docker-multi-stage-build/example.tar.gz" title="example.tar.gz">example.tar.gz</a></p>
-<p> sha256sum<br> <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">5321e3a3d67195f7c44f7c1e76ca229717fcd49ebb3359528038745670f68aba  example.tar.gz</span><br></pre></td></tr></table></figure></p>
-<p>Note: 詳細實驗環境就放在最後<br> <a id="more"></a></p>
-<h1 id="範例-go-專案"><a href="#範例-go-專案" class="headerlink" title="範例 go 專案"></a>範例 go 專案</h1><p>此專案使用 gin 實作 http server 只要對它請求 <code>GET /ping</code> ，則會回覆 pong</p>
+    <content><![CDATA[<p>在專案開發時，通常會執行代碼檢查、單元測試、編譯、執行等等。</p>
+<p>在 docker 還沒出現之前，這些流程都是在本機上跑 (版本 0)，因為環境的不一致可能導致不同主機執行結果不相同。將這些流程步驟撰寫成 dockerfile 直接在容器裡執行就可以解決上述問題 (版本 1)，但也衍伸出了新的問題。為了執行代碼檢查和編譯，下載了許多套件或是相依工具，造成映像檔肥大，很多套件或是相依工具在部署時是不需要的。</p>
+<p>如果把這些步驟拆成兩個階段思考 (版本 2)</p>
+<ul>
+<li>開發整合階段：代碼檢查、單元測試、編譯等等使用。</li>
+<li>部署階段：跑起執行檔，將此兩階段寫成兩個 dockerfile，並且建構出兩個映像檔，只要拿後者映像檔去部署即可。<br>版本 2 成功解決了部署映像檔大小的問題，可是在必須維護兩個 dockerfile 還有中間流程所需的 script，Docker 17.05 所推出的 Multi-stage build 正好能解決此問題 (版本 3)。</li>
+</ul>
+<p>以下則是 版本 0 進化到 版本 3 的過程及解釋。</p>
+<h1 id="範例-go-專案，版本-0：沒使用-docker"><a href="#範例-go-專案，版本-0：沒使用-docker" class="headerlink" title="範例 go 專案，版本 0：沒使用 docker"></a>範例 go 專案，版本 0：沒使用 docker</h1><p>此專案使用 gin 實作 http server 只要對它請求 <code>GET /ping</code> ，則會回覆 pong，<br>以下是專案結構：</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&gt; tree example</span><br><span class="line">example</span><br><span class="line">├── go.mod</span><br><span class="line">├── go.sum</span><br><span class="line">├── main.go</span><br><span class="line">└── main_test.go</span><br></pre></td></tr></table></figure>
 
-<p>go.mod</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">module example.com</span><br><span class="line"></span><br><span class="line">go 1.16</span><br><span class="line"></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-<p>main.go</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import &quot;github.com&#x2F;gin-gonic&#x2F;gin&quot;</span><br><span class="line"></span><br><span class="line">func setupRouter() *gin.Engine &#123;</span><br><span class="line">	r :&#x3D; gin.Default()</span><br><span class="line">	r.GET(&quot;&#x2F;ping&quot;, func(c *gin.Context) &#123;</span><br><span class="line">		c.String(200, &quot;pong&quot;)</span><br><span class="line">	&#125;)</span><br><span class="line">	return r</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">	r :&#x3D; setupRouter()</span><br><span class="line">	r.Run(&quot;:8080&quot;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>main_test.go</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;net&#x2F;http&quot;</span><br><span class="line">	&quot;net&#x2F;http&#x2F;httptest&quot;</span><br><span class="line">	&quot;testing&quot;</span><br><span class="line"></span><br><span class="line">	&quot;github.com&#x2F;stretchr&#x2F;testify&#x2F;assert&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">func TestPingRoute(t *testing.T) &#123;</span><br><span class="line">	router :&#x3D; setupRouter()</span><br><span class="line"></span><br><span class="line">	w :&#x3D; httptest.NewRecorder()</span><br><span class="line">	req, _ :&#x3D; http.NewRequest(&quot;GET&quot;, &quot;&#x2F;ping&quot;, nil)</span><br><span class="line">	router.ServeHTTP(w, req)</span><br><span class="line"></span><br><span class="line">	assert.Equal(t, 200, w.Code)</span><br><span class="line">	assert.Equal(t, &quot;pong&quot;, w.Body.String())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<p>在完成程式碼撰寫之後，會手動做以下動作，在下個段落，我將會將這個步驟改寫成 Dockerfile</p>
+<p>在完成程式碼撰寫之後，執行以下步驟</p>
 <ol>
 <li>使用 go vet 檢查</li>
 <li>使用 staticcheck 檢查</li>
@@ -31,24 +25,24 @@
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ go vet .&#x2F;...</span><br><span class="line">$ staticcheck .&#x2F;...</span><br><span class="line">$ go test .&#x2F;...</span><br><span class="line">$ go build -o .&#x2F;server</span><br><span class="line">$ .&#x2F;server</span><br></pre></td></tr></table></figure>
 
 
-<h1 id="Dockerfile-版本一"><a href="#Dockerfile-版本一" class="headerlink" title="Dockerfile 版本一"></a>Dockerfile 版本一</h1><figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line"><span class="keyword">FROM</span> golang:<span class="number">1.16</span>.<span class="number">0</span>-alpine3.<span class="number">13</span></span><br><span class="line"><span class="comment"># go module</span></span><br><span class="line"><span class="keyword">ENV</span> GO111MODULE=on CGO_ENABLED=<span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># install staticcheck binary</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> go install honnef.co/go/tools/cmd/staticcheck@v0.1.2</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">WORKDIR</span><span class="bash"> /workspace/example</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># download dependency</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> go.mod go.sum .</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash">  go mod download</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># Copy source code</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> . ./</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> go vet ./... &amp;&amp; staticcheck ./... &amp;&amp; go <span class="built_in">test</span> ./... &amp;&amp; go build -o /bin/server</span></span><br></pre></td></tr></table></figure>
+<h1 id="Dockerfile-版本一：-全部都塞在一個映像檔"><a href="#Dockerfile-版本一：-全部都塞在一個映像檔" class="headerlink" title="Dockerfile 版本一： 全部都塞在一個映像檔"></a>Dockerfile 版本一： 全部都塞在一個映像檔</h1><figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line"><span class="keyword">FROM</span> golang:<span class="number">1.16</span>.<span class="number">0</span>-alpine3.<span class="number">13</span></span><br><span class="line"><span class="comment"># go module</span></span><br><span class="line"><span class="keyword">ENV</span> GO111MODULE=on CGO_ENABLED=<span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># install staticcheck binary</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> go install honnef.co/go/tools/cmd/staticcheck@v0.1.2</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">WORKDIR</span><span class="bash"> /workspace/example</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># download dependency</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> go.mod go.sum .</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash">  go mod download</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># Copy source code</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> . ./</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> go vet ./... &amp;&amp; staticcheck ./... &amp;&amp; go <span class="built_in">test</span> ./... &amp;&amp; go build -o /bin/server</span></span><br></pre></td></tr></table></figure>
 
-<p>把 image 做出來</p>
+<p>把映像檔做出來</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ docker image build -t amikai&#x2F;example:v1  .</span><br></pre></td></tr></table></figure>
 
 
-<p>為了要對此專案進行代碼檢查和編譯，必須將相關工具以及依賴下載好，而這些依賴及工具都會佔用到空間，觀察 container 裡 <code>/go</code> (go 相關依賴) 就佔了 328.7 MB (使用 <code>du -sh /go</code> 觀察)，而整個 image 是 687 MB，image 大小還有相當大的改善空間。</p>
-<h1 id="Dockerfile-版本二：維護兩個-dockerfile"><a href="#Dockerfile-版本二：維護兩個-dockerfile" class="headerlink" title="Dockerfile 版本二：維護兩個 dockerfile"></a>Dockerfile 版本二：維護兩個 dockerfile</h1><p>把版本一的 dockfile 拆成兩個階段思考：</p>
+<p>為了要對此專案進行代碼檢查和編譯，必須將相關工具以及依賴下載好，而這些依賴及工具都會佔用到空間，觀察 container 裡 <code>/go</code> (go 相關依賴) 就佔了 328.7 MB (使用 <code>du -sh /go</code> 觀察)，而整個映像檔是 687 MB，映像檔大小還有相當大的改善空間。</p>
+<h1 id="Dockerfile-版本二：拆成兩個階段思考"><a href="#Dockerfile-版本二：拆成兩個階段思考" class="headerlink" title="Dockerfile 版本二：拆成兩個階段思考"></a>Dockerfile 版本二：拆成兩個階段思考</h1><p>把版本一的 dockfile 拆成兩個階段思考：</p>
 <ul>
-<li>從 deploy 的階段來想：最後只要留下需要編譯後所產生的執行檔，其他相關的依賴和工具都是不必要的，編譯完後放在那只是佔位置。</li>
-<li>從 build 的階段來想：為了確保每個人在代碼檢查以及編譯的環境是統一的，減少環境不同所造成的問題。</li>
+<li>從建構的階段來想：為了確保每個人在代碼檢查以及編譯的環境是統一的，減少環境不同所造成的問題。</li>
+<li>從部署的階段來想：最後只要留下需要編譯後所產生的執行檔，其他相關的依賴和工具都是不必要的，編譯完後放在那只是佔位置。</li>
 </ul>
-<p>把這兩個階段的事情，拆成兩個 image file：</p>
+<p>把這兩個階段的事情，拆成兩個映像檔：</p>
 <ul>
-<li>Deploy 階段 (Dockerfile)：此在意的是 image 大小，所以留下編譯後的執行檔即可。</li>
-<li>Build 階段 (Dockerfile.build)：此階段是對原始碼進行檢查及編譯等等，不太需要考慮 image 大小，反正不會拿去部署。</li>
+<li>建構階段 (Dockerfile)：此階段是對原始碼進行檢查及編譯等等，不太需要考慮映像檔大小，反正不會拿去部署。</li>
+<li>部署階段 (Dockerfile.build)： 此在意的是映像檔大小，所以留下編譯後的執行檔即可。</li>
 </ul>
-<p>具體的做法就是先做出一個 <code>Dockerfile.build</code> 去 build 出執行檔，把此執行檔取出，再寫一個 <code>Dockerfile</code> 將此執行檔放入，開始執行。在使用一個 <code>build.sh</code> 將上述事情自動化</p>
+<p>具體的做法就是先做出一個 <code>Dockerfile.build</code> 去 build 出執行檔，把此執行檔取出，再寫一個 <code>Dockerfile</code> 將此執行檔放入，開始執行。在使用一個 <code>build.sh</code> 將上述事情自動化。</p>
 <p>Dockerfile.build</p>
 <figure class="highlight docker"><table><tr><td class="code"><pre><span class="line"><span class="keyword">FROM</span> golang:<span class="number">1.16</span>.<span class="number">0</span>-alpine3.<span class="number">13</span></span><br><span class="line"><span class="comment"># go module</span></span><br><span class="line"><span class="keyword">ENV</span> GO111MODULE=on CGO_ENABLED=<span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># install staticcheck binary</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> go install honnef.co/go/tools/cmd/staticcheck@v0.1.2</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">WORKDIR</span><span class="bash"> /workspace/example</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># download dependency</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> go.mod go.sum .</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash">  go mod download</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Copy source code</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> . ./</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> go vet ./... &amp;&amp; staticcheck ./... &amp;&amp; go <span class="built_in">test</span> ./... &amp;&amp; go build -o /bin/server</span></span><br></pre></td></tr></table></figure>
 
@@ -57,28 +51,30 @@
 <p>build.sh</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">!/bin/sh</span></span><br><span class="line">echo Building amikai/example:build</span><br><span class="line"></span><br><span class="line">docker build -t amikai/example:build . -f Dockerfile.build</span><br><span class="line">docker container create --name extract amikai/example:build </span><br><span class="line">docker container cp extract:/bin/server ./server</span><br><span class="line">docker container rm -f extract</span><br><span class="line"></span><br><span class="line">echo Building amikai/example:v2</span><br><span class="line">docker image build --no-cache -t amikai/example:v2  .</span><br></pre></td></tr></table></figure>
 
-<p>執行 build.sh 將 example:v2 的 image 做出來，這個 image 大小是 15 MB，已經和版本一的 687 MB 有很大的進步空間。</p>
-<p>雖然最終產出的 image 大小有極大的改善，但為了這個 image，必須維護三個檔案，在微服務的世界裡，如果一個 container 裝一個服務，就必須維護 服務數量 * 3 的檔案。</p>
-<p>而且是兩個 image 分別都會佔用到硬碟空間，也就是說雖然拿來 deploy 的 image 改善了大小，但總體佔用的硬碟空間和版本一是幾乎一樣的。</p>
-<h1 id="Dockerfile-版本三：-multi-stage-builds"><a href="#Dockerfile-版本三：-multi-stage-builds" class="headerlink" title="Dockerfile 版本三： multi-stage builds"></a>Dockerfile 版本三： multi-stage builds</h1><p>docker 在 17.05 提出 multi-stage builds，整個 dockerfile 可以分割成好幾個 stage，每個 stage 由 <code>FROM</code> 作為開始，也就是說 <code>FROM</code> 除了選擇基底 image 之外，還有新 stage 起始的意義。</p>
-<p>multi-stage 功能讓我們可以將此 stage 所需要的檔案，複製到下個 stage 做其他事，則最終做出來的 image 只會留下所需的檔案。</p>
+<p>執行 build.sh 將 example:v2 的映像檔做出來，這個映像檔大小是 15 MB，已經和版本一的 687 MB 有很大的進步空間。</p>
+<p>雖然最終產出的映像檔大小有極大的改善，但為了這個映像檔，必須維護三個檔案，在微服務的世界裡，如果一個容器裝一個服務，就必須維護 服務數量 * 3 的檔案。</p>
+<p>而且是兩個映像檔分別都會佔用到硬碟空間，也就是說雖然拿來部署的映像檔改善了大小，但總體佔用的硬碟空間和版本一是幾乎一樣的。</p>
+<h1 id="Dockerfile-版本三：-multi-stage-builds"><a href="#Dockerfile-版本三：-multi-stage-builds" class="headerlink" title="Dockerfile 版本三： multi-stage builds"></a>Dockerfile 版本三： multi-stage builds</h1><p>docker 在 17.05 提出 multi-stage builds，整個 dockerfile 可以分割成好幾個 stage，每個 stage 由 <code>FROM</code> 作為開始，也就是說 <code>FROM</code> 除了選擇基底映像檔之外，還有新 stage 起始的意義。</p>
+<p>multi-stage 功能讓我們可以將此 stage 所需要的檔案，複製到下個 stage 做其他事，則最終做出來的映像檔只會留下所需的檔案。</p>
 <p>版本三的 dockerfile 如下，有兩個 stage:</p>
 <ol>
-<li>builder stage: 以 golang 為基底的 image，用來做原始碼檢查、測試，並且編譯出執行檔</li>
+<li>builder stage: 以 golang 為基底的映像檔，用來做原始碼檢查、測試，並且編譯出執行檔</li>
 <li>release stage: 將 builder stage 的執行檔複製過來，並且執行</li>
 </ol>
 <figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line"><span class="keyword">FROM</span> golang:<span class="number">1.16</span>.<span class="number">0</span>-alpine3.<span class="number">13</span> AS builder</span><br><span class="line"><span class="keyword">WORKDIR</span><span class="bash"> /workspace/example</span></span><br><span class="line"><span class="keyword">ENV</span> GO111MODULE=on CGO_ENABLED=<span class="number">0</span></span><br><span class="line"><span class="comment"># download dependency</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> go.mod go.sum .</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash">  go mod download</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> go install honnef.co/go/tools/cmd/staticcheck@v0.1.2</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> . .</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> go vet ./... &amp;&amp; staticcheck ./... &amp;&amp; go <span class="built_in">test</span> ./... &amp;&amp; go build -o /bin/server</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">FROM</span> alpine:latest AS release</span><br><span class="line"><span class="comment"># Copy from builder</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> --from=builder /bin/server /bin/server</span></span><br><span class="line"><span class="keyword">ENTRYPOINT</span><span class="bash"> [<span class="string">"./bin/server"</span>]</span></span><br></pre></td></tr></table></figure>
 
-<p>把 image 做出來</p>
+<p>把映像檔做出來</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ docker image build -t amikai&#x2F;example:v3  .</span><br></pre></td></tr></table></figure>
 
-<p>版本三的 image 大小為 15 MB，解決了版本二不需要維護三個檔案也解決了版本一產出肥大 image 的痛點。multi-stage builds 真是個有感的功能呀。</p>
-<h1 id="詳細實驗環境"><a href="#詳細實驗環境" class="headerlink" title="詳細實驗環境"></a>詳細實驗環境</h1><p>golang</p>
+<p>版本三的映像檔大小為 15 MB，解決了版本二不需要維護三個檔案也解決了版本一產出肥大映像檔的痛點。multi-stage builds 真是個有感的功能呀。</p>
+<h1 id="實驗環境"><a href="#實驗環境" class="headerlink" title="實驗環境"></a>實驗環境</h1><p>golang</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"> $ go version</span><br><span class="line">go version go1.16 darwin&#x2F;amd64</span><br></pre></td></tr></table></figure>
 
 <p>docker</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"> $ docker version</span><br><span class="line">Client: Docker Engine - Community</span><br><span class="line"> Cloud integration: 1.0.7</span><br><span class="line"> Version:           20.10.2</span><br><span class="line"> API version:       1.41</span><br><span class="line"> Go version:        go1.13.15</span><br><span class="line"> Git commit:        2291f61</span><br><span class="line"> Built:             Mon Dec 28 16:12:42 2020</span><br><span class="line"> OS&#x2F;Arch:           darwin&#x2F;amd64</span><br><span class="line"> Context:           default</span><br><span class="line"> Experimental:      true</span><br><span class="line"></span><br><span class="line">Server: Docker Engine - Community</span><br><span class="line"> Engine:</span><br><span class="line">  Version:          20.10.2</span><br><span class="line">  API version:      1.41 (minimum version 1.12)</span><br><span class="line">  Go version:       go1.13.15</span><br><span class="line">  Git commit:       8891c58</span><br><span class="line">  Built:            Mon Dec 28 16:15:28 2020</span><br><span class="line">  OS&#x2F;Arch:          linux&#x2F;amd64</span><br><span class="line">  Experimental:     false</span><br><span class="line"> containerd:</span><br><span class="line">  Version:          1.4.3</span><br><span class="line">  GitCommit:        269548fa27e0089a8b8278fc4fc781d7f65a939b</span><br><span class="line"> runc:</span><br><span class="line">  Version:          1.0.0-rc92</span><br><span class="line">  GitCommit:        ff819c7e9184c13b7c2607fe6c30ae19403a7aff</span><br><span class="line"> docker-init:</span><br><span class="line">  Version:          0.19.0</span><br><span class="line">  GitCommit:        de40ad0</span><br><span class="line"> Kubernetes:</span><br><span class="line">  Version:          v1.16.15-gke.7800</span><br><span class="line">  StackAPI:         Unknown</span><br></pre></td></tr></table></figure>
 
+<p> 此為範例專案最終完成版，並且可以透過 git 記錄看到版本一和版本二的內容。<br> <a href="/2021/03/01/docker-multi-stage-build/example.tar.gz" title="example.tar.gz">example.tar.gz</a></p>
+<p> sha256sum<br> <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">5321e3a3d67195f7c44f7c1e76ca229717fcd49ebb3359528038745670f68aba  example.tar.gz</span><br></pre></td></tr></table></figure></p>
 <h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
 <li><a href="https://docs.docker.com/develop/develop-images/multistage-build/" target="_blank" rel="noopener">https://docs.docker.com/develop/develop-images/multistage-build/</a></li>
 <li><a href="https://tachingchen.com/tw/blog/building-minimal-docker-image-for-go-applications/" target="_blank" rel="noopener">打造最小 Go Docker Image</a></li>
@@ -86,6 +82,7 @@
 <li><a href="https://www.docker.com/blog/tag/go-env-series/" target="_blank" rel="noopener">https://www.docker.com/blog/tag/go-env-series/</a></li>
 <li><a href="https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/syntax.md" target="_blank" rel="noopener">https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/syntax.md</a></li>
 <li><a href="https://www.ctl.io/developers/blog/post/more-docker-image-cache-tips/" target="_blank" rel="noopener">https://www.ctl.io/developers/blog/post/more-docker-image-cache-tips/</a></li>
+<li><a href="https://rock-it.pl/how-to-write-excellent-dockerfiles/" target="_blank" rel="noopener">How to write excellent Dockerfiles</a></li>
 </ul>
 ]]></content>
       <tags>
@@ -518,6 +515,58 @@
       </tags>
   </entry>
   <entry>
+    <title>聊聊 vim mark 使用情境 - code 參照</title>
+    <url>/2020/09/07/vim-mark-tips/</url>
+    <content><![CDATA[<img data-src="/2020/09/07/vim-mark-tips/cover.png" class="">
+<p>寫程式的時候常常遇到一種情況，假設你是團隊的新人，需要常常參照別人的程式，看看團隊的 coding style 等等，可能需要參照 A file 的第 10 行，B file 第 8 行，C file 第 999 行。</p>
+<p>另一種情境則是在寫測試的時候會和實作交互參照，而測試程式往往和實作程式會拆開不同的檔案，所以就必須要一直跳轉。</p>
+<p>使用 split 的方式縱然是一個不錯的方式，但是如果要參照的點大於三個，就將螢幕切成三份，那工程師就相當痛苦了，不是每個人都用這種電腦螢幕啊。這種 split 的方式還有另一個缺點：如果手殘將檔案關掉，就得重找。</p>
+<img data-src="/2020/09/07/vim-mark-tips/cj890.jpg" class="">
+
+ <a id="more"></a>
+
+<h1 id="Mark"><a href="#Mark" class="headerlink" title="Mark"></a>Mark</h1><p>vim 的 mark 取名或許源自於 bookmark (書籤) 這個字，書籤的用意在於能快速找回你上次看的那一頁，而 vim mark 的用意也是如此：能快速找回你剛剛在看 code 的地方。</p>
+<p>vim 的 mark 分為三種：</p>
+<ul>
+<li>Local mark <code>a-z</code>： 每一個 file 裡皆有自己的 local mark，也就是說檔案 A 可以有 mark a, 檔案 B 裡也可以有自己的 mark a</li>
+<li>Global mark <code>A-Z</code>： 此種 mark 是全域的，也就是說在檔案 A 裡所看到的 mark A 和 B 檔案 B 裡的 mark A 是一樣的</li>
+<li>Special mark：其他神奇的 mark，不在此文章討論範圍</li>
+</ul>
+<p>mark 的基本使用：</p>
+<ul>
+<li><code>ma</code>： 在這個地方設置 mark a</li>
+<li><code>mA</code>： 在這個地方設置 mark A</li>
+<li><code>&#39;a</code>： 跳到 mark a 的這行 (此行的第一個非空白字元)</li>
+<li><code>`a</code>： 精準的跳到你當初設置 mark a 的位置 (第幾行第幾列)</li>
+<li><code>:marks</code>： 列出來所有 mark，有時候 mark 設置太多會忘</li>
+</ul>
+<p>更多詳細操作請參照 Reference 3</p>
+<h1 id="回到正題"><a href="#回到正題" class="headerlink" title="回到正題"></a>回到正題</h1><p>還記得一開始的情境敘述嗎？<br>雖然你已經知道要在 A file 第 10 行 <code>mA</code>， 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code>。</p>
+<p>實際上在寫 code 時我會這樣做：</p>
+<ul>
+<li>我會先將我需要參照的地方找出並且 mark，以剛剛的例子來說就是在 A file 第 10 行 <code>mA</code> 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code></li>
+<li>使用 <code>:vsplit</code> 將螢幕切成兩邊，左邊寫 code，右邊當參照區域</li>
+<li>需要參照 B 這個位置時，移動到參照區域 ，<code>&#39;B</code> 再移動回寫 code 區域繼續寫</li>
+</ul>
+<img data-src="/2020/09/07/vim-mark-tips/mark_show.png" class="">
+
+<p>那 local mark 什麼時候用？<br>當一個檔案大於 1000 行，寫的程式在 1001 行，但你需要參照的程式在第一行，也就是都在同一個 file 跳轉的時候可以使用。</p>
+<h1 id="search-小技巧"><a href="#search-小技巧" class="headerlink" title="search 小技巧"></a>search 小技巧</h1><p>每次在使用 <code>/</code> 搜尋一定會案 <code>n</code> 或 <code>N</code> 到處跳轉，尋找目標，常常找完了之後，忘記我原本的地方在哪了，此時就能先用 mark 記住後在開始用 <code>/</code> 查找。<br>由於常使用這種操作，所以直接這樣：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">nnoremap</span> / ms/</span><br></pre></td></tr></table></figure>
+<p> 在<code>/</code>搜尋完後，要跳回原本的地方就 <code>&#39;s</code> 就好</p>
+<h1 id="結語"><a href="#結語" class="headerlink" title="結語"></a>結語</h1><p>人類總是會在大量的資料中迷失，並且花上很多時間查找和記憶，標記(或是書籤)就是其中一種解決方案，而且應用不只在書上，到處都可以看到類似的應用，像是檔案夾的標籤、英文書在最後會有的索引，然而在寫程式上也不例外。不管是在寫 code 上還是其他應用，好好的應用這些工具將能事半功倍。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
+<li><a href="https://medium.com/usevim/vim-101-marks-caad7106b241" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-marks-caad7106b241</a></li>
+<li><a href="https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea</a></li>
+<li><a href="https://vim.fandom.com/wiki/Using_marks" target="_blank" rel="noopener">https://vim.fandom.com/wiki/Using_marks</a></li>
+</ol>
+]]></content>
+      <tags>
+        <tag>vim</tag>
+        <tag>neovim</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>誰說不能在 vim 裡編譯，從 :make 到 :Make</title>
     <url>/2020/09/10/vim-make/</url>
     <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>回想一下，上一次使用 vim 寫 code 到一個段落要編譯時，你是怎麼做的。</p>
@@ -572,58 +621,6 @@
 ]]></content>
       <tags>
         <tag>vim</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>聊聊 vim mark 使用情境 - code 參照</title>
-    <url>/2020/09/07/vim-mark-tips/</url>
-    <content><![CDATA[<img data-src="/2020/09/07/vim-mark-tips/cover.png" class="">
-<p>寫程式的時候常常遇到一種情況，假設你是團隊的新人，需要常常參照別人的程式，看看團隊的 coding style 等等，可能需要參照 A file 的第 10 行，B file 第 8 行，C file 第 999 行。</p>
-<p>另一種情境則是在寫測試的時候會和實作交互參照，而測試程式往往和實作程式會拆開不同的檔案，所以就必須要一直跳轉。</p>
-<p>使用 split 的方式縱然是一個不錯的方式，但是如果要參照的點大於三個，就將螢幕切成三份，那工程師就相當痛苦了，不是每個人都用這種電腦螢幕啊。這種 split 的方式還有另一個缺點：如果手殘將檔案關掉，就得重找。</p>
-<img data-src="/2020/09/07/vim-mark-tips/cj890.jpg" class="">
-
- <a id="more"></a>
-
-<h1 id="Mark"><a href="#Mark" class="headerlink" title="Mark"></a>Mark</h1><p>vim 的 mark 取名或許源自於 bookmark (書籤) 這個字，書籤的用意在於能快速找回你上次看的那一頁，而 vim mark 的用意也是如此：能快速找回你剛剛在看 code 的地方。</p>
-<p>vim 的 mark 分為三種：</p>
-<ul>
-<li>Local mark <code>a-z</code>： 每一個 file 裡皆有自己的 local mark，也就是說檔案 A 可以有 mark a, 檔案 B 裡也可以有自己的 mark a</li>
-<li>Global mark <code>A-Z</code>： 此種 mark 是全域的，也就是說在檔案 A 裡所看到的 mark A 和 B 檔案 B 裡的 mark A 是一樣的</li>
-<li>Special mark：其他神奇的 mark，不在此文章討論範圍</li>
-</ul>
-<p>mark 的基本使用：</p>
-<ul>
-<li><code>ma</code>： 在這個地方設置 mark a</li>
-<li><code>mA</code>： 在這個地方設置 mark A</li>
-<li><code>&#39;a</code>： 跳到 mark a 的這行 (此行的第一個非空白字元)</li>
-<li><code>`a</code>： 精準的跳到你當初設置 mark a 的位置 (第幾行第幾列)</li>
-<li><code>:marks</code>： 列出來所有 mark，有時候 mark 設置太多會忘</li>
-</ul>
-<p>更多詳細操作請參照 Reference 3</p>
-<h1 id="回到正題"><a href="#回到正題" class="headerlink" title="回到正題"></a>回到正題</h1><p>還記得一開始的情境敘述嗎？<br>雖然你已經知道要在 A file 第 10 行 <code>mA</code>， 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code>。</p>
-<p>實際上在寫 code 時我會這樣做：</p>
-<ul>
-<li>我會先將我需要參照的地方找出並且 mark，以剛剛的例子來說就是在 A file 第 10 行 <code>mA</code> 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code></li>
-<li>使用 <code>:vsplit</code> 將螢幕切成兩邊，左邊寫 code，右邊當參照區域</li>
-<li>需要參照 B 這個位置時，移動到參照區域 ，<code>&#39;B</code> 再移動回寫 code 區域繼續寫</li>
-</ul>
-<img data-src="/2020/09/07/vim-mark-tips/mark_show.png" class="">
-
-<p>那 local mark 什麼時候用？<br>當一個檔案大於 1000 行，寫的程式在 1001 行，但你需要參照的程式在第一行，也就是都在同一個 file 跳轉的時候可以使用。</p>
-<h1 id="search-小技巧"><a href="#search-小技巧" class="headerlink" title="search 小技巧"></a>search 小技巧</h1><p>每次在使用 <code>/</code> 搜尋一定會案 <code>n</code> 或 <code>N</code> 到處跳轉，尋找目標，常常找完了之後，忘記我原本的地方在哪了，此時就能先用 mark 記住後在開始用 <code>/</code> 查找。<br>由於常使用這種操作，所以直接這樣：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">nnoremap</span> / ms/</span><br></pre></td></tr></table></figure>
-<p> 在<code>/</code>搜尋完後，要跳回原本的地方就 <code>&#39;s</code> 就好</p>
-<h1 id="結語"><a href="#結語" class="headerlink" title="結語"></a>結語</h1><p>人類總是會在大量的資料中迷失，並且花上很多時間查找和記憶，標記(或是書籤)就是其中一種解決方案，而且應用不只在書上，到處都可以看到類似的應用，像是檔案夾的標籤、英文書在最後會有的索引，然而在寫程式上也不例外。不管是在寫 code 上還是其他應用，好好的應用這些工具將能事半功倍。</p>
-<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
-<li><a href="https://medium.com/usevim/vim-101-marks-caad7106b241" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-marks-caad7106b241</a></li>
-<li><a href="https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea</a></li>
-<li><a href="https://vim.fandom.com/wiki/Using_marks" target="_blank" rel="noopener">https://vim.fandom.com/wiki/Using_marks</a></li>
-</ol>
-]]></content>
-      <tags>
-        <tag>vim</tag>
-        <tag>neovim</tag>
       </tags>
   </entry>
   <entry>

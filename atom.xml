@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://amikai.github.io/"/>
-  <updated>2021-03-01T14:30:43.930Z</updated>
+  <updated>2021-05-08T03:21:01.735Z</updated>
   <id>https://amikai.github.io/</id>
   
   <author>
@@ -21,15 +21,18 @@
     <link href="https://amikai.github.io/2021/03/01/docker-multi-stage-build/"/>
     <id>https://amikai.github.io/2021/03/01/docker-multi-stage-build/</id>
     <published>2021-03-01T13:57:33.000Z</published>
-    <updated>2021-03-01T14:30:43.930Z</updated>
+    <updated>2021-05-08T03:21:01.735Z</updated>
     
     <summary type="html">
     
-      &lt;p&gt; docker 在專案部署上解掉了環境不同所多出的成本和問題。除了部署之外， 專案開發流程複雜時，團隊也可以使用 docker 統一開發流程，加速開發的速度。&lt;/p&gt;
-&lt;p&gt; 此篇將以 go 語言專案為例，使用 docker 對此專案進行代碼檢查、測試、編譯，從建構最簡單的 Dockerfile 撰寫起，一步一步從版本一改善到版本三也就是 multi-stage build 的版本。&lt;/p&gt;
-&lt;p&gt;此檔案為最終完成版，並且可以透過 git 記錄看到版本一和版本二的內容。&lt;br&gt; &lt;a href=&quot;/2021/03/01/docker-multi-stage-build/example.tar.gz&quot; title=&quot;example.tar.gz&quot;&gt;example.tar.gz&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt; sha256sum&lt;br&gt; &lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;5321e3a3d67195f7c44f7c1e76ca229717fcd49ebb3359528038745670f68aba  example.tar.gz&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
-&lt;p&gt;Note: 詳細實驗環境就放在最後&lt;br&gt;
+      
+      
+        
+        
+          &lt;p&gt;在專案開發時，通常會執行代碼檢查、單元測試、編譯、執行等等。&lt;/p&gt;
+&lt;p&gt;在 docker 還沒出現之前，這些流程都是在本機上跑 (版本 0)，因為環境的不一致可能導致不同主機執行結果不相同。將這些流程步驟撰寫成 dockerfile 直接在容器裡執行就可以解決上述問題
+        
+      
     
     </summary>
     

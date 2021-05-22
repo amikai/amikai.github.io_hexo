@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://amikai.github.io/"/>
-  <updated>2021-05-08T03:26:42.501Z</updated>
+  <updated>2021-05-22T21:56:50.159Z</updated>
   <id>https://amikai.github.io/</id>
   
   <author>
@@ -15,6 +15,30 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>好用的 vim virtualedit 選項</title>
+    <link href="https://amikai.github.io/2021/05/23/vim-virtualedit/"/>
+    <id>https://amikai.github.io/2021/05/23/vim-virtualedit/</id>
+    <published>2021-05-22T21:51:41.000Z</published>
+    <updated>2021-05-22T21:56:50.159Z</updated>
+    
+    <summary type="html">
+    
+      &lt;p&gt;使用 &lt;code&gt;ctrl+v&lt;/code&gt; 把一個圖片中的英文字母區塊刪掉會像以下這樣&lt;br&gt;顯然是不如預期&lt;/p&gt;
+&lt;img data-src=&quot;/2021/05/23/vim-virtualedit/virtual-block-1.gif&quot; class=&quot;&quot;&gt;
+
+
+&lt;p&gt;&lt;code&gt;set virtualedit=block&lt;/code&gt;&lt;br&gt;設定了此選項之後&lt;/p&gt;
+&lt;img data-src=&quot;/2021/05/23/vim-virtualedit/virtual-block-2.gif&quot; class=&quot;&quot;&gt;
+    
+    </summary>
+    
+    
+    
+      <category term="vim" scheme="https://amikai.github.io/tags/vim/"/>
+    
+  </entry>
   
   <entry>
     <title>Dockerfile -  Multi-stage build 筆記</title>

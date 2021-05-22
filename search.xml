@@ -1,6 +1,163 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>在 (neo)vim 裡 C 語言程式碼導覽技巧</title>
+    <url>/2020/11/28/vim-c-env-move/</url>
+    <content><![CDATA[<p>現代的專案開發，很少在從無到有打造，大部分都是基於現有的程式之上繼續開發或維護，進入專案之後，通常第一件事就是大量閱讀程式碼理清專案的整個脈絡，才開始著手寫 code，所以好的程式碼導覽技巧將會帶你上天堂。</p>
+<p>我將大部分的程式碼導覽情境大致拆成了三種情況：</p>
+<ul>
+<li>基本的跳轉：<ul>
+<li><code>#if</code> <code>#endif</code> 中間的程式碼太長，想要跳轉到成對的 <code>#if</code> <code>#endif</code> </li>
+<li>cursor 在 {…} block 裡， 這個 block 又臭又長，想快速跳轉 block 的開頭和結尾</li>
+<li>註解長篇大論，想快速跳到註解的開頭或結尾</li>
+</ul>
+</li>
+<li>尋找專案下檔案 (可透過設定 path option 解決)<ul>
+<li>跳轉到標頭檔</li>
+<li>跳轉到指定檔案</li>
+</ul>
+</li>
+<li>使用 source code tagging system 快速挑轉到 function 定義及特定 symbol 等等：<br>專案相當大的時候，source code tagging system 相當好用，可以快速找到定位，也不會花掉太多的資源，比起 LSP 的跳轉定義，是較輕量的選擇。</li>
+</ul>
+<p>本篇依據上述三種情境，一一講述。<br> <a id="more"></a></p>
+<h1 id="常用跳轉操作"><a href="#常用跳轉操作" class="headerlink" title="常用跳轉操作"></a>常用跳轉操作</h1><ul>
+<li><p><code>%</code></p>
+<ul>
+<li>跳到成對的括號</li>
+<li>如果註解是 <code>/*...*/</code>，跳到成對的註解符號</li>
+<li>在成對的 <code>#if</code>, <code>#ifdef</code>, <code>#else</code>, <code>#elif</code>, <code>#endif</code> 之中跳轉，這相當重要，如果 code 很長, if else macro 又是巢狀的，這招可以讓你少迷路好幾次</li>
+</ul>
+</li>
+<li><p><code>[{</code> <code>]}</code></p>
+<ul>
+<li><code>[{</code>：若 cursor 在 {…} 區塊中，跳到此區塊的 {</li>
+<li><code>]}</code>：若 cursor 在 {…} 區塊中，跳到此區塊的 }</li>
+</ul>
+</li>
+<li><p><code>[*</code> <code>]*</code></p>
+<ul>
+<li><code>[*</code>：找到上一個 /*</li>
+<li><code>]*</code>：找到下一個 */</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><p><code>[#</code> <code>]#</code><br>  用法和 <code>[{</code> <code>]}</code> 類似，但是針對的是 <code>#</code><br>  在 line2 區塊 <code>[{</code> 跳到 line1, <code>]}</code> 跳到 line3<br>  在 line4 區塊 <code>[{</code> 跳到 line3, <code>]}</code> 跳到 line5<br>  在 line6 區塊 <code>[{</code> 跳到 line5, <code>]}</code> 跳到 line7</p>
+  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> TEST</span></span><br><span class="line"><span class="comment">// line2</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">elif</span> TEST2</span></span><br><span class="line"><span class="comment">// line4</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line"><span class="comment">// line6</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p>  若 cursor 在 #else…#endif 區塊中，跳到 #else</p>
+</li>
+</ul>
+<h1 id="透過-path-設定，快速查找相關檔案"><a href="#透過-path-設定，快速查找相關檔案" class="headerlink" title="透過 path 設定，快速查找相關檔案"></a>透過 path 設定，快速查找相關檔案</h1><p>看看以下圖片，將 cursor 移動到程式碼標頭檔的位置 (stdio.h)，按下 <code>gf</code>，bang! 你跳到 stdio.h 標頭檔了</p>
+<img data-src="/2020/11/28/vim-c-env-move/vim_gf.gif" class="">
+
+
+<p>再來看看 <code>:find</code> 指令，我想找出 stdlib.h 標頭檔，使用 <code>:find stdlib.h</code>, 就跳到 stdlib.h 啦</p>
+<p>我們來看看 vim 到底怎麼實現這個魔法的：<br>其實 vim 是藉由 <code>path</code> 這個 option 去搜尋的 (詳見 <code>:help &#39;path&#39;</code>)，path 這個值由許多路徑組成並由逗號隔開，在 nix 系統裡 vim 對 path 預設的值是 </p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">.,/usr/include,,</span><br></pre></td></tr></table></figure>
+<p>可以看到三個值：</p>
+<ul>
+<li><code>.</code>： 當前檔案所在的目錄</li>
+<li><code>/usr/include</code>： 很顯然找到 <code>gf</code> 找到的 stdio.h 和 <code>:find</code> 找到的 stdlib.h 是由這個目錄找出來的</li>
+<li>empty string：工作目錄 (current work directory, 通常是 vim 開啟的位置，如果你沒用 <code>:cd</code> 的話)</li>
+</ul>
+<p>所以可以把自己常用的標頭檔所在目錄加入 path ！ 舉個例子 <code>/usr/local/include</code> 也是很常放標頭檔的路徑，所以我把它加入到 path</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">set</span> path+=/usr/local/include</span><br></pre></td></tr></table></figure>
+
+
+<p>註: <code>.</code> 和 empty string 的差別請看：<a href="https://vi.stackexchange.com/questions/5998/is-vims-default-path-option-redundant" target="_blank" rel="noopener">is-vims-default-path-option-redundant</a></p>
+<p><code>**</code> 算是一個蠻好用的值，它會對路徑做 recursive 的解析，你可能會使用到它，詳細的規則可以看 <code>:help starstar</code></p>
+<h1 id="Source-code-tagging-system-和-vim"><a href="#Source-code-tagging-system-和-vim" class="headerlink" title="Source code tagging system 和 vim"></a>Source code tagging system 和 vim</h1><p>2020 年 Linux kernel 原始碼規模已經達到 2780 萬行，規模如此之龐大，Linux 的程式開發人員到底是怎麼開發的，隨便想找一個 function 定義都相當吃力，總不能用 grep 慢慢去找吧!這時候 source code tagging system 就派上用場了，它可以對專案所有的 symbol 產生索引檔，需要查找目標時就藉由這些索引檔快速查找位置。概念其實就是字典的索引，字典這麼大一本不會有人從頭掃到尾，都是直接翻到字典最後面的索引快速找到目標。</p>
+<p>這些 source code tagging system，通常會產生索引檔並且提供一個介面，讓編輯器使用它們快速在程式碼內定位。</p>
+<p>接下來將逐一介紹 cscope, gtags, ctags 等等三個 source code tagging system 在 vim 裡的基本使用方式。</p>
+<h1 id="Cscope"><a href="#Cscope" class="headerlink" title="Cscope"></a>Cscope</h1><h2 id="Cscope-簡介"><a href="#Cscope-簡介" class="headerlink" title="Cscope 簡介"></a>Cscope 簡介</h2><p>cscope 官網聲稱可以做到以下事情：</p>
+<ul>
+<li>查詢所有使用到這個 symbol 的地方</li>
+<li>查詢全域變數</li>
+<li>查詢 function 在哪被呼叫</li>
+<li>查詢這個 function 呼叫了誰</li>
+<li>使用字串查詢找到目標</li>
+<li>使用 egrep pattern 尋找目標</li>
+<li>快速尋找專案下檔案</li>
+<li>查看哪個檔案 include 當前檔案</li>
+</ul>
+<p>cscope 指令常用選項</p>
+<ul>
+<li>b：只產生索引檔案，不進入互動查詢介面</li>
+<li>q：產生 cscope.in.out 和 cscope.po.out文件，加快 cscope 的索引速度 </li>
+<li>k：產生索引檔案时，不搜尋 /usr/include</li>
+<li>R：遞迴搜尋子目錄</li>
+</ul>
+<h2 id="Cscope-和-vim"><a href="#Cscope-和-vim" class="headerlink" title="Cscope 和 vim"></a>Cscope 和 vim</h2><p>在專案目錄產生索引檔案:</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">$ cscope -bkqR</span><br></pre></td></tr></table></figure>
+<p>會產生三個檔案 <code>cscope.in.out</code> <code>cscope.out</code> <code>cscope.po.out</code></p>
+<p>進入 vim 之後可以透過 <code>cs</code> 查看 cscope 在 vim 裡的使用方式</p>
+<img data-src="/2020/11/28/vim-c-env-move/vim_cscope.png" class="">
+
+
+<p>讓 vim 知道 cscope 的路徑</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">set</span> cscopeprg=/path/<span class="keyword">to</span>/<span class="keyword">cscope</span></span><br></pre></td></tr></table></figure>
+
+<p>指定 cscope 索引檔案，讓 vim 知道要用哪個索引檔案查詢：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">cs</span> <span class="built_in">add</span> <span class="keyword">cscope</span>.out</span><br></pre></td></tr></table></figure>
+
+<p>接下來就可以使用以下方式查詢 (xxx 為想搜尋的目標):</p>
+<ul>
+<li><code>:cs find a xxx</code> 查尋 xxx 被賦值的地方</li>
+<li><code>:cs find c xxx</code> 查尋所有呼叫 xxx function 的地方</li>
+<li><code>:cs find d xxx</code> 查尋 xxx function 呼叫的所有函數</li>
+<li><code>:cs find e xxx</code> 使用 egrep pattern 查詢</li>
+<li><code>:cs find f xxx</code> 找出 xxx 檔案在哪裡</li>
+<li><code>:cs find g xxx</code> 查尋 xxx 所定義的地方 (通常最常用的是這個)</li>
+<li><code>:cs find i xxx</code> 查尋所有 inlcude xxx 檔案的地方</li>
+<li><code>:cs find s xxx</code> 查尋所有 xxx symbol 出現的地方</li>
+<li><code>:cs find t xxx</code> 查詢 xxx 字串出現的地方，其實搜尋效果就類似 grep </li>
+</ul>
+<p>記得查詢完的結果可以用 <code>:cw</code>, <code>:copen</code> 在 quickfix window 列出：</p>
+<h1 id="GNU-GLOBAL-gtags"><a href="#GNU-GLOBAL-gtags" class="headerlink" title="GNU GLOBAL (gtags)"></a>GNU GLOBAL (gtags)</h1><p>由 GNU GLOBAL 由 GNU 所開發的 soure code tagging system，本身支持四種語言，透過 Pygments 和 Universal Ctags 的 parser 可以支持其他 25 種語言，支援 incremental update，原始碼更動後，只會對改變的地方索引，不會重新索引，這對龐大的專案有很大的幫助。另外 gtags 提供了 cscope 相容的互動介面，叫做 gtags-cscope，讓你用起來像 cscope，但背後其實是 gtags 的索引檔案。</p>
+<p>在專案目錄產生索引檔案：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ gtags</span><br></pre></td></tr></table></figure>
+
+<p>讓 vim 知道 gtags-cscope 路徑：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">set</span> cscopeprg=/path/<span class="keyword">to</span>/gtsgs-<span class="keyword">cscope</span></span><br></pre></td></tr></table></figure>
+
+<p>指定 gtags 索引檔案，讓 vim 知道要用哪個索引檔案查詢：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">cs</span> <span class="built_in">add</span> GTAGS</span><br></pre></td></tr></table></figure>
+<p>借下來就可以用和 cscope 一樣的方式查詢，除了 <code>:cs find d</code>，其他皆支援 </p>
+<h1 id="Ctags"><a href="#Ctags" class="headerlink" title="Ctags"></a>Ctags</h1><h2 id="Ctags-簡介"><a href="#Ctags-簡介" class="headerlink" title="Ctags 簡介"></a>Ctags 簡介</h2><p>最早的 Ctag 在 BSD 上實現，版本變革的歷史脈絡我不是相當清楚，查不太到資料。<br>現在普及的版本是 Exuberant Ctags，一開始和 vim 是一包軟體，一起發布，但在 vim6 之後獨立成兩個專案，從這裏可看出它一定和 vim 兼容良好，但此版本在 2009 年之後已不再維護。建議使用Exuberant Ctags 所 fork 的版本 Universal Ctags，目前還在維護和開發當中。</p>
+<h2 id="Ctags-和-vim"><a href="#Ctags-和-vim" class="headerlink" title="Ctags 和 vim"></a>Ctags 和 vim</h2><p>在專案下生成索引檔案，可以看到目錄裡有 <code>tags</code> 檔案</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ctags -R *</span><br></pre></td></tr></table></figure>
+
+
+<p>指定 tags 索引檔案，讓 vim 知道要用哪個索引檔案查詢：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">set</span> <span class="keyword">tags</span>=<span class="keyword">tags</span></span><br></pre></td></tr></table></figure>
+
+<p>再來就可以使用:</p>
+<ul>
+<li><code>Ctrl + ]</code>: 跳到定義，如果有多個匹配則會跳到第一個</li>
+<li><code>Ctrl + T</code>: 跳回原本的地方</li>
+</ul>
+<p>每次用 <code>ctrl + ]</code> 跳轉到定義，vim 就會把這位置推到 tag stack 裡，每次 <code>ctrl + T</code> 跳回原來的地方，vim 就會從 tag stack 裡 pop 位置出來，我們可以使用 <code>:tags</code> 看到 tag stack 裡的內容。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><p><a href="https://dev.to/iggredible/how-to-use-tags-in-vim-to-jump-to-definitions-quickly-2g28" target="_blank" rel="noopener">https://dev.to/iggredible/how-to-use-tags-in-vim-to-jump-to-definitions-quickly-2g28</a></p>
+</li>
+<li><p><a href="http://praton.me/2020/04/11/Exploring-kernel-code-with-vim.html" target="_blank" rel="noopener">http://praton.me/2020/04/11/Exploring-kernel-code-with-vim.html</a></p>
+</li>
+<li><p><a href="https://neovim.io/doc/user/usr_29.html" target="_blank" rel="noopener">:help usr_29.txt</a></p>
+</li>
+<li><p><a href="https://neovim.io/doc/user/usr_30.html" target="_blank" rel="noopener">:help usr_30.txt</a></p>
+</li>
+<li><p><a href="https://neovim.io/doc/user/tagsrch.html" target="_blank" rel="noopener">:help tagsrch.txt</a></p>
+</li>
+</ul>
+]]></content>
+      <tags>
+        <tag>vim</tag>
+        <tag>neovim</tag>
+        <tag>c</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Dockerfile -  Multi-stage build 筆記</title>
     <url>/2021/03/01/docker-multi-stage-build/</url>
     <content><![CDATA[<p>在專案開發時，通常會執行代碼檢查、單元測試、編譯、執行等等。</p>
@@ -219,6 +376,95 @@
       </tags>
   </entry>
   <entry>
+    <title>Golang 78 語法篇 - method set</title>
+    <url>/2020/07/07/golang78syntax2/</url>
+    <content><![CDATA[<p><code>method set</code>, <code>interface</code>, <code>auto deference or reference</code> 當這些語法綜合再一起使用時，很容易混淆，甚至寫出 bug code，這章我們就透過題目探討一下 <code>method set</code> 常常被大家誤會的地方。</p>
+<a href="/2020/07/03/golang78syntax/" title="Golang 78 語法篇 - interface">Golang 78 語法篇 - interface</a> Line 50 用到的概念就在這篇。
+
+
+<h1 id="題目"><a href="#題目" class="headerlink" title="題目"></a>題目</h1><p>請問以下程式輸出結果為何</p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	(&amp;Employee&#123;&#125;).DoWork()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>答案只有兩種方向:<br>    1. 無法編譯<br>    2. 印出 do work</p>
+<p>這個程式可以編譯，並且還印出 do work 但是為什麼呢？</p>
+ <a id="more"></a>
+
+<h1 id="Method-set"><a href="#Method-set" class="headerlink" title="Method set"></a>Method set</h1><p>在 receiver argument 和 receiver parameter 不一樣的情況下，直覺反應就是 <code>implicit dereference</code> 和 <code>implicit reference</code> 在背後會幫忙，但是這個寫法 (struct literal) 是不會有此情況的。</p>
+<p>既然沒有 <code>implicit dereference</code> 和 <code>implicit reference</code> 的支援，那一定存在其它機制使得這段 code 能正常編譯。</p>
+<p>以下從 <a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">Golang Specification</a>所截取的句子:</p>
+<p>The method set of the corresponding pointer type *T is the set of all methods declared with receiver *T or T (that is, it also contains the method set of T)</p>
+<p>以下是從 <a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang FAQ</a> 所截取的句子:</p>
+<p>As the Go specification says, the method set of a type T consists of all methods with receiver type T, while that of the corresponding pointer type *T consists of all methods with receiver *T or T. That means the method set of *T includes that of T, but not the reverse</p>
+<p>其實意思就是型態 T 的所有 method 包含了所有 receiver 型態是 T 的 method，這理所當然，看起來也像廢話，另一句才是關鍵，也是今日的重點：*T 型態的所有 method 包含了 receiver 型態是 T 及 *T 的 method。</p>
+<p>有了此結論我們就能知道 <code>*Employee</code> 的 method set 裡是有 <code>DoWork()</code>，所以編譯會過。</p>
+<p>那這就有趣了，再看一個延伸題，請問這段 code 編譯會不會過:</p>
+<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Worker <span class="keyword">interface</span> &#123;</span><br><span class="line">	DoWork()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> w Worker = &amp;Employee&#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>這段 code 問的其實就是 Employee 到底有沒有符合(satisfy) <code>Worker</code> 介面，根據剛剛所得出的結論， <code>*Employee</code> 的 method set 裡是有包含 <code>DoWork</code> 的，所以編譯是會過的。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
+<li><a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang Frequently Asked Questions (FAQ)</a></li>
+<li><a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">The Go Programming Language Specification - Method sets</a></li>
+</ol>
+]]></content>
+      <categories>
+        <category>golang78 syntax series</category>
+      </categories>
+      <tags>
+        <tag>golang</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>聊聊 vim mark 使用情境 - code 參照</title>
+    <url>/2020/09/07/vim-mark-tips/</url>
+    <content><![CDATA[<img data-src="/2020/09/07/vim-mark-tips/cover.png" class="">
+<p>寫程式的時候常常遇到一種情況，假設你是團隊的新人，需要常常參照別人的程式，看看團隊的 coding style 等等，可能需要參照 A file 的第 10 行，B file 第 8 行，C file 第 999 行。</p>
+<p>另一種情境則是在寫測試的時候會和實作交互參照，而測試程式往往和實作程式會拆開不同的檔案，所以就必須要一直跳轉。</p>
+<p>使用 split 的方式縱然是一個不錯的方式，但是如果要參照的點大於三個，就將螢幕切成三份，那工程師就相當痛苦了，不是每個人都用這種電腦螢幕啊。這種 split 的方式還有另一個缺點：如果手殘將檔案關掉，就得重找。</p>
+<img data-src="/2020/09/07/vim-mark-tips/cj890.jpg" class="">
+
+ <a id="more"></a>
+
+<h1 id="Mark"><a href="#Mark" class="headerlink" title="Mark"></a>Mark</h1><p>vim 的 mark 取名或許源自於 bookmark (書籤) 這個字，書籤的用意在於能快速找回你上次看的那一頁，而 vim mark 的用意也是如此：能快速找回你剛剛在看 code 的地方。</p>
+<p>vim 的 mark 分為三種：</p>
+<ul>
+<li>Local mark <code>a-z</code>： 每一個 file 裡皆有自己的 local mark，也就是說檔案 A 可以有 mark a, 檔案 B 裡也可以有自己的 mark a</li>
+<li>Global mark <code>A-Z</code>： 此種 mark 是全域的，也就是說在檔案 A 裡所看到的 mark A 和 B 檔案 B 裡的 mark A 是一樣的</li>
+<li>Special mark：其他神奇的 mark，不在此文章討論範圍</li>
+</ul>
+<p>mark 的基本使用：</p>
+<ul>
+<li><code>ma</code>： 在這個地方設置 mark a</li>
+<li><code>mA</code>： 在這個地方設置 mark A</li>
+<li><code>&#39;a</code>： 跳到 mark a 的這行 (此行的第一個非空白字元)</li>
+<li><code>`a</code>： 精準的跳到你當初設置 mark a 的位置 (第幾行第幾列)</li>
+<li><code>:marks</code>： 列出來所有 mark，有時候 mark 設置太多會忘</li>
+</ul>
+<p>更多詳細操作請參照 Reference 3</p>
+<h1 id="回到正題"><a href="#回到正題" class="headerlink" title="回到正題"></a>回到正題</h1><p>還記得一開始的情境敘述嗎？<br>雖然你已經知道要在 A file 第 10 行 <code>mA</code>， 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code>。</p>
+<p>實際上在寫 code 時我會這樣做：</p>
+<ul>
+<li>我會先將我需要參照的地方找出並且 mark，以剛剛的例子來說就是在 A file 第 10 行 <code>mA</code> 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code></li>
+<li>使用 <code>:vsplit</code> 將螢幕切成兩邊，左邊寫 code，右邊當參照區域</li>
+<li>需要參照 B 這個位置時，移動到參照區域 ，<code>&#39;B</code> 再移動回寫 code 區域繼續寫</li>
+</ul>
+<img data-src="/2020/09/07/vim-mark-tips/mark_show.png" class="">
+
+<p>那 local mark 什麼時候用？<br>當一個檔案大於 1000 行，寫的程式在 1001 行，但你需要參照的程式在第一行，也就是都在同一個 file 跳轉的時候可以使用。</p>
+<h1 id="search-小技巧"><a href="#search-小技巧" class="headerlink" title="search 小技巧"></a>search 小技巧</h1><p>每次在使用 <code>/</code> 搜尋一定會案 <code>n</code> 或 <code>N</code> 到處跳轉，尋找目標，常常找完了之後，忘記我原本的地方在哪了，此時就能先用 mark 記住後在開始用 <code>/</code> 查找。<br>由於常使用這種操作，所以直接這樣：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">nnoremap</span> / ms/</span><br></pre></td></tr></table></figure>
+<p> 在<code>/</code>搜尋完後，要跳回原本的地方就 <code>&#39;s</code> 就好</p>
+<h1 id="結語"><a href="#結語" class="headerlink" title="結語"></a>結語</h1><p>人類總是會在大量的資料中迷失，並且花上很多時間查找和記憶，標記(或是書籤)就是其中一種解決方案，而且應用不只在書上，到處都可以看到類似的應用，像是檔案夾的標籤、英文書在最後會有的索引，然而在寫程式上也不例外。不管是在寫 code 上還是其他應用，好好的應用這些工具將能事半功倍。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
+<li><a href="https://medium.com/usevim/vim-101-marks-caad7106b241" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-marks-caad7106b241</a></li>
+<li><a href="https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea</a></li>
+<li><a href="https://vim.fandom.com/wiki/Using_marks" target="_blank" rel="noopener">https://vim.fandom.com/wiki/Using_marks</a></li>
+</ol>
+]]></content>
+      <tags>
+        <tag>vim</tag>
+        <tag>neovim</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Golang 78 語法篇 - interface</title>
     <url>/2020/07/03/golang78syntax/</url>
     <content><![CDATA[<p>Interface 可以說是 golang 的精髓之一。golang interface 特殊的語法以及概念也是工程師常常犯錯的地方。此題只是用來釐清自己的概念。</p>
@@ -257,200 +503,6 @@
       </categories>
       <tags>
         <tag>golang</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Golang 78 語法篇 - method set</title>
-    <url>/2020/07/07/golang78syntax2/</url>
-    <content><![CDATA[<p><code>method set</code>, <code>interface</code>, <code>auto deference or reference</code> 當這些語法綜合再一起使用時，很容易混淆，甚至寫出 bug code，這章我們就透過題目探討一下 <code>method set</code> 常常被大家誤會的地方。</p>
-<a href="/2020/07/03/golang78syntax/" title="Golang 78 語法篇 - interface">Golang 78 語法篇 - interface</a> Line 50 用到的概念就在這篇。
-
-
-<h1 id="題目"><a href="#題目" class="headerlink" title="題目"></a>題目</h1><p>請問以下程式輸出結果為何</p>
-<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	(&amp;Employee&#123;&#125;).DoWork()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>答案只有兩種方向:<br>    1. 無法編譯<br>    2. 印出 do work</p>
-<p>這個程式可以編譯，並且還印出 do work 但是為什麼呢？</p>
- <a id="more"></a>
-
-<h1 id="Method-set"><a href="#Method-set" class="headerlink" title="Method set"></a>Method set</h1><p>在 receiver argument 和 receiver parameter 不一樣的情況下，直覺反應就是 <code>implicit dereference</code> 和 <code>implicit reference</code> 在背後會幫忙，但是這個寫法 (struct literal) 是不會有此情況的。</p>
-<p>既然沒有 <code>implicit dereference</code> 和 <code>implicit reference</code> 的支援，那一定存在其它機制使得這段 code 能正常編譯。</p>
-<p>以下從 <a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">Golang Specification</a>所截取的句子:</p>
-<p>The method set of the corresponding pointer type *T is the set of all methods declared with receiver *T or T (that is, it also contains the method set of T)</p>
-<p>以下是從 <a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang FAQ</a> 所截取的句子:</p>
-<p>As the Go specification says, the method set of a type T consists of all methods with receiver type T, while that of the corresponding pointer type *T consists of all methods with receiver *T or T. That means the method set of *T includes that of T, but not the reverse</p>
-<p>其實意思就是型態 T 的所有 method 包含了所有 receiver 型態是 T 的 method，這理所當然，看起來也像廢話，另一句才是關鍵，也是今日的重點：*T 型態的所有 method 包含了 receiver 型態是 T 及 *T 的 method。</p>
-<p>有了此結論我們就能知道 <code>*Employee</code> 的 method set 裡是有 <code>DoWork()</code>，所以編譯會過。</p>
-<p>那這就有趣了，再看一個延伸題，請問這段 code 編譯會不會過:</p>
-<figure class="highlight golang"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> Worker <span class="keyword">interface</span> &#123;</span><br><span class="line">	DoWork()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Employee <span class="keyword">struct</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e Employee)</span> <span class="title">DoWork</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Println(<span class="string">"do work"</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> w Worker = &amp;Employee&#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>這段 code 問的其實就是 Employee 到底有沒有符合(satisfy) <code>Worker</code> 介面，根據剛剛所得出的結論， <code>*Employee</code> 的 method set 裡是有包含 <code>DoWork</code> 的，所以編譯是會過的。</p>
-<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
-<li><a href="https://golang.org/doc/faq#different_method_sets" target="_blank" rel="noopener">Golang Frequently Asked Questions (FAQ)</a></li>
-<li><a href="https://golang.org/ref/spec#Method_sets" target="_blank" rel="noopener">The Go Programming Language Specification - Method sets</a></li>
-</ol>
-]]></content>
-      <categories>
-        <category>golang78 syntax series</category>
-      </categories>
-      <tags>
-        <tag>golang</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>在 (neo)vim 裡 C 語言程式碼導覽技巧</title>
-    <url>/2020/11/28/vim-c-env-move/</url>
-    <content><![CDATA[<p>現代的專案開發，很少在從無到有打造，大部分都是基於現有的程式之上繼續開發或維護，進入專案之後，通常第一件事就是大量閱讀程式碼理清專案的整個脈絡，才開始著手寫 code，所以好的程式碼導覽技巧將會帶你上天堂。</p>
-<p>我將大部分的程式碼導覽情境大致拆成了三種情況：</p>
-<ul>
-<li>基本的跳轉：<ul>
-<li><code>#if</code> <code>#endif</code> 中間的程式碼太長，想要跳轉到成對的 <code>#if</code> <code>#endif</code> </li>
-<li>cursor 在 {…} block 裡， 這個 block 又臭又長，想快速跳轉 block 的開頭和結尾</li>
-<li>註解長篇大論，想快速跳到註解的開頭或結尾</li>
-</ul>
-</li>
-<li>尋找專案下檔案 (可透過設定 path option 解決)<ul>
-<li>跳轉到標頭檔</li>
-<li>跳轉到指定檔案</li>
-</ul>
-</li>
-<li>使用 source code tagging system 快速挑轉到 function 定義及特定 symbol 等等：<br>專案相當大的時候，source code tagging system 相當好用，可以快速找到定位，也不會花掉太多的資源，比起 LSP 的跳轉定義，是較輕量的選擇。</li>
-</ul>
-<p>本篇依據上述三種情境，一一講述。<br> <a id="more"></a></p>
-<h1 id="常用跳轉操作"><a href="#常用跳轉操作" class="headerlink" title="常用跳轉操作"></a>常用跳轉操作</h1><ul>
-<li><p><code>%</code></p>
-<ul>
-<li>跳到成對的括號</li>
-<li>如果註解是 <code>/*...*/</code>，跳到成對的註解符號</li>
-<li>在成對的 <code>#if</code>, <code>#ifdef</code>, <code>#else</code>, <code>#elif</code>, <code>#endif</code> 之中跳轉，這相當重要，如果 code 很長, if else macro 又是巢狀的，這招可以讓你少迷路好幾次</li>
-</ul>
-</li>
-<li><p><code>[{</code> <code>]}</code></p>
-<ul>
-<li><code>[{</code>：若 cursor 在 {…} 區塊中，跳到此區塊的 {</li>
-<li><code>]}</code>：若 cursor 在 {…} 區塊中，跳到此區塊的 }</li>
-</ul>
-</li>
-<li><p><code>[*</code> <code>]*</code></p>
-<ul>
-<li><code>[*</code>：找到上一個 /*</li>
-<li><code>]*</code>：找到下一個 */</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li><p><code>[#</code> <code>]#</code><br>  用法和 <code>[{</code> <code>]}</code> 類似，但是針對的是 <code>#</code><br>  在 line2 區塊 <code>[{</code> 跳到 line1, <code>]}</code> 跳到 line3<br>  在 line4 區塊 <code>[{</code> 跳到 line3, <code>]}</code> 跳到 line5<br>  在 line6 區塊 <code>[{</code> 跳到 line5, <code>]}</code> 跳到 line7</p>
-  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> TEST</span></span><br><span class="line"><span class="comment">// line2</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">elif</span> TEST2</span></span><br><span class="line"><span class="comment">// line4</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line"><span class="comment">// line6</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
-
-<p>  若 cursor 在 #else…#endif 區塊中，跳到 #else</p>
-</li>
-</ul>
-<h1 id="透過-path-設定，快速查找相關檔案"><a href="#透過-path-設定，快速查找相關檔案" class="headerlink" title="透過 path 設定，快速查找相關檔案"></a>透過 path 設定，快速查找相關檔案</h1><p>看看以下圖片，將 cursor 移動到程式碼標頭檔的位置 (stdio.h)，按下 <code>gf</code>，bang! 你跳到 stdio.h 標頭檔了</p>
-<img data-src="/2020/11/28/vim-c-env-move/vim_gf.gif" class="">
-
-
-<p>再來看看 <code>:find</code> 指令，我想找出 stdlib.h 標頭檔，使用 <code>:find stdlib.h</code>, 就跳到 stdlib.h 啦</p>
-<p>我們來看看 vim 到底怎麼實現這個魔法的：<br>其實 vim 是藉由 <code>path</code> 這個 option 去搜尋的 (詳見 <code>:help &#39;path&#39;</code>)，path 這個值由許多路徑組成並由逗號隔開，在 nix 系統裡 vim 對 path 預設的值是 </p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">.,/usr/include,,</span><br></pre></td></tr></table></figure>
-<p>可以看到三個值：</p>
-<ul>
-<li><code>.</code>： 當前檔案所在的目錄</li>
-<li><code>/usr/include</code>： 很顯然找到 <code>gf</code> 找到的 stdio.h 和 <code>:find</code> 找到的 stdlib.h 是由這個目錄找出來的</li>
-<li>empty string：工作目錄 (current work directory, 通常是 vim 開啟的位置，如果你沒用 <code>:cd</code> 的話)</li>
-</ul>
-<p>所以可以把自己常用的標頭檔所在目錄加入 path ！ 舉個例子 <code>/usr/local/include</code> 也是很常放標頭檔的路徑，所以我把它加入到 path</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">set</span> path+=/usr/local/include</span><br></pre></td></tr></table></figure>
-
-
-<p>註: <code>.</code> 和 empty string 的差別請看：<a href="https://vi.stackexchange.com/questions/5998/is-vims-default-path-option-redundant" target="_blank" rel="noopener">is-vims-default-path-option-redundant</a></p>
-<p><code>**</code> 算是一個蠻好用的值，它會對路徑做 recursive 的解析，你可能會使用到它，詳細的規則可以看 <code>:help starstar</code></p>
-<h1 id="Source-code-tagging-system-和-vim"><a href="#Source-code-tagging-system-和-vim" class="headerlink" title="Source code tagging system 和 vim"></a>Source code tagging system 和 vim</h1><p>2020 年 Linux kernel 原始碼規模已經達到 2780 萬行，規模如此之龐大，Linux 的程式開發人員到底是怎麼開發的，隨便想找一個 function 定義都相當吃力，總不能用 grep 慢慢去找吧!這時候 source code tagging system 就派上用場了，它可以對專案所有的 symbol 產生索引檔，需要查找目標時就藉由這些索引檔快速查找位置。概念其實就是字典的索引，字典這麼大一本不會有人從頭掃到尾，都是直接翻到字典最後面的索引快速找到目標。</p>
-<p>這些 source code tagging system，通常會產生索引檔並且提供一個介面，讓編輯器使用它們快速在程式碼內定位。</p>
-<p>接下來將逐一介紹 cscope, gtags, ctags 等等三個 source code tagging system 在 vim 裡的基本使用方式。</p>
-<h1 id="Cscope"><a href="#Cscope" class="headerlink" title="Cscope"></a>Cscope</h1><h2 id="Cscope-簡介"><a href="#Cscope-簡介" class="headerlink" title="Cscope 簡介"></a>Cscope 簡介</h2><p>cscope 官網聲稱可以做到以下事情：</p>
-<ul>
-<li>查詢所有使用到這個 symbol 的地方</li>
-<li>查詢全域變數</li>
-<li>查詢 function 在哪被呼叫</li>
-<li>查詢這個 function 呼叫了誰</li>
-<li>使用字串查詢找到目標</li>
-<li>使用 egrep pattern 尋找目標</li>
-<li>快速尋找專案下檔案</li>
-<li>查看哪個檔案 include 當前檔案</li>
-</ul>
-<p>cscope 指令常用選項</p>
-<ul>
-<li>b：只產生索引檔案，不進入互動查詢介面</li>
-<li>q：產生 cscope.in.out 和 cscope.po.out文件，加快 cscope 的索引速度 </li>
-<li>k：產生索引檔案时，不搜尋 /usr/include</li>
-<li>R：遞迴搜尋子目錄</li>
-</ul>
-<h2 id="Cscope-和-vim"><a href="#Cscope-和-vim" class="headerlink" title="Cscope 和 vim"></a>Cscope 和 vim</h2><p>在專案目錄產生索引檔案:</p>
-<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">$ cscope -bkqR</span><br></pre></td></tr></table></figure>
-<p>會產生三個檔案 <code>cscope.in.out</code> <code>cscope.out</code> <code>cscope.po.out</code></p>
-<p>進入 vim 之後可以透過 <code>cs</code> 查看 cscope 在 vim 裡的使用方式</p>
-<img data-src="/2020/11/28/vim-c-env-move/vim_cscope.png" class="">
-
-
-<p>讓 vim 知道 cscope 的路徑</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">set</span> cscopeprg=/path/<span class="keyword">to</span>/<span class="keyword">cscope</span></span><br></pre></td></tr></table></figure>
-
-<p>指定 cscope 索引檔案，讓 vim 知道要用哪個索引檔案查詢：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">cs</span> <span class="built_in">add</span> <span class="keyword">cscope</span>.out</span><br></pre></td></tr></table></figure>
-
-<p>接下來就可以使用以下方式查詢 (xxx 為想搜尋的目標):</p>
-<ul>
-<li><code>:cs find a xxx</code> 查尋 xxx 被賦值的地方</li>
-<li><code>:cs find c xxx</code> 查尋所有呼叫 xxx function 的地方</li>
-<li><code>:cs find d xxx</code> 查尋 xxx function 呼叫的所有函數</li>
-<li><code>:cs find e xxx</code> 使用 egrep pattern 查詢</li>
-<li><code>:cs find f xxx</code> 找出 xxx 檔案在哪裡</li>
-<li><code>:cs find g xxx</code> 查尋 xxx 所定義的地方 (通常最常用的是這個)</li>
-<li><code>:cs find i xxx</code> 查尋所有 inlcude xxx 檔案的地方</li>
-<li><code>:cs find s xxx</code> 查尋所有 xxx symbol 出現的地方</li>
-<li><code>:cs find t xxx</code> 查詢 xxx 字串出現的地方，其實搜尋效果就類似 grep </li>
-</ul>
-<p>記得查詢完的結果可以用 <code>:cw</code>, <code>:copen</code> 在 quickfix window 列出：</p>
-<h1 id="GNU-GLOBAL-gtags"><a href="#GNU-GLOBAL-gtags" class="headerlink" title="GNU GLOBAL (gtags)"></a>GNU GLOBAL (gtags)</h1><p>由 GNU GLOBAL 由 GNU 所開發的 soure code tagging system，本身支持四種語言，透過 Pygments 和 Universal Ctags 的 parser 可以支持其他 25 種語言，支援 incremental update，原始碼更動後，只會對改變的地方索引，不會重新索引，這對龐大的專案有很大的幫助。另外 gtags 提供了 cscope 相容的互動介面，叫做 gtags-cscope，讓你用起來像 cscope，但背後其實是 gtags 的索引檔案。</p>
-<p>在專案目錄產生索引檔案：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ gtags</span><br></pre></td></tr></table></figure>
-
-<p>讓 vim 知道 gtags-cscope 路徑：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">set</span> cscopeprg=/path/<span class="keyword">to</span>/gtsgs-<span class="keyword">cscope</span></span><br></pre></td></tr></table></figure>
-
-<p>指定 gtags 索引檔案，讓 vim 知道要用哪個索引檔案查詢：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">cs</span> <span class="built_in">add</span> GTAGS</span><br></pre></td></tr></table></figure>
-<p>借下來就可以用和 cscope 一樣的方式查詢，除了 <code>:cs find d</code>，其他皆支援 </p>
-<h1 id="Ctags"><a href="#Ctags" class="headerlink" title="Ctags"></a>Ctags</h1><h2 id="Ctags-簡介"><a href="#Ctags-簡介" class="headerlink" title="Ctags 簡介"></a>Ctags 簡介</h2><p>最早的 Ctag 在 BSD 上實現，版本變革的歷史脈絡我不是相當清楚，查不太到資料。<br>現在普及的版本是 Exuberant Ctags，一開始和 vim 是一包軟體，一起發布，但在 vim6 之後獨立成兩個專案，從這裏可看出它一定和 vim 兼容良好，但此版本在 2009 年之後已不再維護。建議使用Exuberant Ctags 所 fork 的版本 Universal Ctags，目前還在維護和開發當中。</p>
-<h2 id="Ctags-和-vim"><a href="#Ctags-和-vim" class="headerlink" title="Ctags 和 vim"></a>Ctags 和 vim</h2><p>在專案下生成索引檔案，可以看到目錄裡有 <code>tags</code> 檔案</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ctags -R *</span><br></pre></td></tr></table></figure>
-
-
-<p>指定 tags 索引檔案，讓 vim 知道要用哪個索引檔案查詢：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">:<span class="keyword">set</span> <span class="keyword">tags</span>=<span class="keyword">tags</span></span><br></pre></td></tr></table></figure>
-
-<p>再來就可以使用:</p>
-<ul>
-<li><code>Ctrl + ]</code>: 跳到定義，如果有多個匹配則會跳到第一個</li>
-<li><code>Ctrl + T</code>: 跳回原本的地方</li>
-</ul>
-<p>每次用 <code>ctrl + ]</code> 跳轉到定義，vim 就會把這位置推到 tag stack 裡，每次 <code>ctrl + T</code> 跳回原來的地方，vim 就會從 tag stack 裡 pop 位置出來，我們可以使用 <code>:tags</code> 看到 tag stack 裡的內容。</p>
-<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
-<li><p><a href="https://dev.to/iggredible/how-to-use-tags-in-vim-to-jump-to-definitions-quickly-2g28" target="_blank" rel="noopener">https://dev.to/iggredible/how-to-use-tags-in-vim-to-jump-to-definitions-quickly-2g28</a></p>
-</li>
-<li><p><a href="http://praton.me/2020/04/11/Exploring-kernel-code-with-vim.html" target="_blank" rel="noopener">http://praton.me/2020/04/11/Exploring-kernel-code-with-vim.html</a></p>
-</li>
-<li><p><a href="https://neovim.io/doc/user/usr_29.html" target="_blank" rel="noopener">:help usr_29.txt</a></p>
-</li>
-<li><p><a href="https://neovim.io/doc/user/usr_30.html" target="_blank" rel="noopener">:help usr_30.txt</a></p>
-</li>
-<li><p><a href="https://neovim.io/doc/user/tagsrch.html" target="_blank" rel="noopener">:help tagsrch.txt</a></p>
-</li>
-</ul>
-]]></content>
-      <tags>
-        <tag>vim</tag>
-        <tag>neovim</tag>
-        <tag>c</tag>
       </tags>
   </entry>
   <entry>
@@ -512,115 +564,6 @@
 ]]></content>
       <tags>
         <tag>vim</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>誰說不能在 vim 裡編譯，從 :make 到 :Make</title>
-    <url>/2020/09/10/vim-make/</url>
-    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>回想一下，上一次使用 vim 寫 code 到一個段落要編譯時，你是怎麼做的。</p>
-<p>我看到大多數人的方式，就是將 terminal 切成兩塊，一塊寫 code，一塊編譯，若編譯有錯誤，再移動到寫 code 區塊更改。<br>如果使用此方法，當專案有規模時，編譯錯誤一百條，看了編譯錯誤在哪之後，再將編譯錯誤的位置，從專案裡找出來，反覆來回 100 次，直到修正完畢。<br>本文以 C 語言專案為例 (當然不是只有 C 語言才能這樣子幹，可看 Q&amp;A)，聊聊強大的 vim 在這種情境下有什麼好的解決方案。</p>
-<img data-src="/2020/09/10/vim-make/tmux_split.png" class="">
- <a id="more"></a>
-
-
-<h1 id="強大的-make"><a href="#強大的-make" class="headerlink" title="強大的 :make"></a>強大的 <code>:make</code></h1><h2 id="基本款"><a href="#基本款" class="headerlink" title="基本款"></a>基本款</h2><p>此次範例就拿 neovim 來編譯好了，根據官方文件要這樣編譯 <code>make CMAKE_BUILD_TYPE=Release</code>，所以在我在 vim 裡這樣編 <code>:make CMAKE_BUILD_TYPE=Release</code></p>
-<p>看起來噴了一點錯誤，案了 <code>enter</code> 似乎之後什麼事都沒發生，回到平常。</p>
-<img data-src="/2020/09/10/vim-make/make_cmd.png" class="">
-
-<p>用 <code>:cl</code> 指令，喔幹!不是一點錯誤，是一堆錯誤，沒列出來根本不知道。</p>
-<img data-src="/2020/09/10/vim-make/clist_cmd.png" class="">
-
-<p>重點來了!! 可以使用 <code>:cn</code> (<code>:cnext</code>) 跳到下一個錯誤位置，<code>:cp</code> (<code>:cprevious</code>) 跳轉到上一個錯誤位置，就不需要自己手動一個一個錯誤找出來。<br>看上圖，可以觀察到，每一條錯誤前面都有一個數字，如果想要跳到特定錯誤去修那就使用 <code>:cc [number]</code>，跳轉到第一個錯誤就用 <code>:cc 12</code>，跳轉到第三個錯誤就用 <code>:cc 19</code>。</p>
-<p>火力展示:</p>
-<img data-src="/2020/09/10/vim-make/clist_demo.gif" class="">
-
-<p>總結一下指令:</p>
-<ul>
-<li><code>:make</code>: 執行 makefile</li>
-<li><code>:cl</code>: 列出所有錯誤</li>
-<li><code>:cn</code>: 跳到下個錯誤</li>
-<li><code>:cp</code>: 跳到上個錯誤</li>
-<li><code>:cc [number]</code>: 跳轉到特定錯誤</li>
-</ul>
-<h2 id="如虎添翼的-quickfix-window"><a href="#如虎添翼的-quickfix-window" class="headerlink" title="如虎添翼的 quickfix-window"></a>如虎添翼的 quickfix-window</h2><p>編譯完之後，除了用 <code>:cl</code> 查看，另一種方式就是用 <code>:copen</code>，打下此指令之後，將會彈出 quickfix-window，列出的錯誤其實就是 <code>:clist</code> 的詳細版本， quickfix-window 只是提供了一種查找的方式。</p>
-<img data-src="/2020/09/10/vim-make/copen_cmd.png" class="">
-<p>移轉到 quickfix-window 後，移動到想要查看的錯誤，案 <code>enter</code> 即可跳轉到該錯誤位置，當然也能配合 <code>:cn</code>, <code>:cp</code>, <code>:cc [number]</code>，quickfix-window 會配合這些指令連動顯示目前位置。</p>
-<p>Note: 詳見 <code>:help quickfix-window</code></p>
-<h1 id="讓你飛起來的-vim-dispatch"><a href="#讓你飛起來的-vim-dispatch" class="headerlink" title="讓你飛起來的 vim-dispatch"></a>讓你飛起來的 vim-dispatch</h1><p>使用 vim 內建的 <code>:make</code> 指令，在編譯時其實是會 block 整個 vim 的，若專案夠大編譯很久，那段時間什麼都不能做，只能看著他編譯，vim-dispatch 完美解決了這個問題。</p>
-<p>安裝:</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">Plug <span class="string">'tpope/vim-dispatch'</span></span><br></pre></td></tr></table></figure>
-
-<p>其實 vim-dispatch 用法很簡單，<code>:Make</code> 編譯，<code>:Copen</code> 打開 quickfix-window，當然也能配合剛剛所提到的跳轉指令使用，幾乎完美配合 vim 的使用習慣。</p>
-<p>當然 vim-dispatch 不只這樣而已，其他功能不在本篇範圍，詳情請見 vim-dispatch 的文件。</p>
-<p>火力展示，可以看到上方的視窗可以移動 cursor，下方則繼續編譯:</p>
-<img data-src="/2020/09/10/vim-make/Make_demo.gif" class="">
-
-<h1 id="Q-amp-A"><a href="#Q-amp-A" class="headerlink" title="Q &amp; A"></a>Q &amp; A</h1><h2 id="vim-使用-make-指令，那不是只有寫-Makefile-才能用嗎"><a href="#vim-使用-make-指令，那不是只有寫-Makefile-才能用嗎" class="headerlink" title="vim 使用 :make 指令，那不是只有寫 Makefile 才能用嗎?"></a>vim 使用 <code>:make</code> 指令，那不是只有寫 Makefile 才能用嗎?</h2><p>當然在想在其他語言使用 <code>:make</code> 指令，達到一樣效果就要編寫客製化的 plugin 了，當然很受歡迎的語言都有人寫好啦，通常都是包在語言 plugin 裡：</p>
-<ul>
-<li><a href="https://github.com/rust-lang/rust.vim" target="_blank" rel="noopener">rust.vim</a>: 原本編譯方式是 <code>cargo build</code>，在 vim 裡變成 <code>:make build</code> 就好，以此類推可以 <code>:make run</code></li>
-<li><a href="https://github.com/fatih/vim-go" target="_blank" rel="noopener">vim-go</a>:在 vim-go 可以使用 <code>:GoBuild</code>, <code>:GoRun</code></li>
-</ul>
-<h1 id="結語"><a href="#結語" class="headerlink" title="結語"></a>結語</h1><p>vim 是一個古老的編輯器，某些特色和 C 語言沾上關係，比如說 make 指令 (或許當年 C 語言獨佔天下!?)，當然 vim 不只可以使用 make 這種自動化編譯，vim 也開放了幾個 api 使得再起他語言也能達成一樣的效果 (詳見 <code>:help makeprg</code>)，在專案愈大時愈能顯現其效果，當年我也是碰了一點 linux kernel，才學習到這個技巧，加速了不少開發速度。</p>
-<p>如果有什麼相關技巧，歡迎在底下留言交流。</p>
-<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
-<li><a href="https://www.ptt.cc/bbs/Editor/M.1285722960.A.BF5.html" target="_blank" rel="noopener">Re: [轉錄][問題] VIM 編譯與執行</a></li>
-<li>vim help doc</li>
-</ul>
-]]></content>
-      <tags>
-        <tag>vim</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>聊聊 vim mark 使用情境 - code 參照</title>
-    <url>/2020/09/07/vim-mark-tips/</url>
-    <content><![CDATA[<img data-src="/2020/09/07/vim-mark-tips/cover.png" class="">
-<p>寫程式的時候常常遇到一種情況，假設你是團隊的新人，需要常常參照別人的程式，看看團隊的 coding style 等等，可能需要參照 A file 的第 10 行，B file 第 8 行，C file 第 999 行。</p>
-<p>另一種情境則是在寫測試的時候會和實作交互參照，而測試程式往往和實作程式會拆開不同的檔案，所以就必須要一直跳轉。</p>
-<p>使用 split 的方式縱然是一個不錯的方式，但是如果要參照的點大於三個，就將螢幕切成三份，那工程師就相當痛苦了，不是每個人都用這種電腦螢幕啊。這種 split 的方式還有另一個缺點：如果手殘將檔案關掉，就得重找。</p>
-<img data-src="/2020/09/07/vim-mark-tips/cj890.jpg" class="">
-
- <a id="more"></a>
-
-<h1 id="Mark"><a href="#Mark" class="headerlink" title="Mark"></a>Mark</h1><p>vim 的 mark 取名或許源自於 bookmark (書籤) 這個字，書籤的用意在於能快速找回你上次看的那一頁，而 vim mark 的用意也是如此：能快速找回你剛剛在看 code 的地方。</p>
-<p>vim 的 mark 分為三種：</p>
-<ul>
-<li>Local mark <code>a-z</code>： 每一個 file 裡皆有自己的 local mark，也就是說檔案 A 可以有 mark a, 檔案 B 裡也可以有自己的 mark a</li>
-<li>Global mark <code>A-Z</code>： 此種 mark 是全域的，也就是說在檔案 A 裡所看到的 mark A 和 B 檔案 B 裡的 mark A 是一樣的</li>
-<li>Special mark：其他神奇的 mark，不在此文章討論範圍</li>
-</ul>
-<p>mark 的基本使用：</p>
-<ul>
-<li><code>ma</code>： 在這個地方設置 mark a</li>
-<li><code>mA</code>： 在這個地方設置 mark A</li>
-<li><code>&#39;a</code>： 跳到 mark a 的這行 (此行的第一個非空白字元)</li>
-<li><code>`a</code>： 精準的跳到你當初設置 mark a 的位置 (第幾行第幾列)</li>
-<li><code>:marks</code>： 列出來所有 mark，有時候 mark 設置太多會忘</li>
-</ul>
-<p>更多詳細操作請參照 Reference 3</p>
-<h1 id="回到正題"><a href="#回到正題" class="headerlink" title="回到正題"></a>回到正題</h1><p>還記得一開始的情境敘述嗎？<br>雖然你已經知道要在 A file 第 10 行 <code>mA</code>， 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code>。</p>
-<p>實際上在寫 code 時我會這樣做：</p>
-<ul>
-<li>我會先將我需要參照的地方找出並且 mark，以剛剛的例子來說就是在 A file 第 10 行 <code>mA</code> 在 B file 第 8 行 <code>mB</code>，C file 第 999 行 <code>mC</code></li>
-<li>使用 <code>:vsplit</code> 將螢幕切成兩邊，左邊寫 code，右邊當參照區域</li>
-<li>需要參照 B 這個位置時，移動到參照區域 ，<code>&#39;B</code> 再移動回寫 code 區域繼續寫</li>
-</ul>
-<img data-src="/2020/09/07/vim-mark-tips/mark_show.png" class="">
-
-<p>那 local mark 什麼時候用？<br>當一個檔案大於 1000 行，寫的程式在 1001 行，但你需要參照的程式在第一行，也就是都在同一個 file 跳轉的時候可以使用。</p>
-<h1 id="search-小技巧"><a href="#search-小技巧" class="headerlink" title="search 小技巧"></a>search 小技巧</h1><p>每次在使用 <code>/</code> 搜尋一定會案 <code>n</code> 或 <code>N</code> 到處跳轉，尋找目標，常常找完了之後，忘記我原本的地方在哪了，此時就能先用 mark 記住後在開始用 <code>/</code> 查找。<br>由於常使用這種操作，所以直接這樣：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">nnoremap</span> / ms/</span><br></pre></td></tr></table></figure>
-<p> 在<code>/</code>搜尋完後，要跳回原本的地方就 <code>&#39;s</code> 就好</p>
-<h1 id="結語"><a href="#結語" class="headerlink" title="結語"></a>結語</h1><p>人類總是會在大量的資料中迷失，並且花上很多時間查找和記憶，標記(或是書籤)就是其中一種解決方案，而且應用不只在書上，到處都可以看到類似的應用，像是檔案夾的標籤、英文書在最後會有的索引，然而在寫程式上也不例外。不管是在寫 code 上還是其他應用，好好的應用這些工具將能事半功倍。</p>
-<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ol>
-<li><a href="https://medium.com/usevim/vim-101-marks-caad7106b241" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-marks-caad7106b241</a></li>
-<li><a href="https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea" target="_blank" rel="noopener">https://medium.com/usevim/vim-101-practicing-marks-fc5778d8aaea</a></li>
-<li><a href="https://vim.fandom.com/wiki/Using_marks" target="_blank" rel="noopener">https://vim.fandom.com/wiki/Using_marks</a></li>
-</ol>
-]]></content>
-      <tags>
-        <tag>vim</tag>
-        <tag>neovim</tag>
       </tags>
   </entry>
   <entry>
@@ -744,6 +687,83 @@
       <tags>
         <tag>vim</tag>
         <tag>neovim</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>好用的 vim virtualedit 選項</title>
+    <url>/2021/05/23/vim-virtualedit/</url>
+    <content><![CDATA[<p>使用 <code>ctrl+v</code> 把一個圖片中的英文字母區塊刪掉會像以下這樣<br>顯然是不如預期</p>
+<img data-src="/2021/05/23/vim-virtualedit/virtual-block-1.gif" class="">
+
+
+<p><code>set virtualedit=block</code><br>設定了此選項之後</p>
+<img data-src="/2021/05/23/vim-virtualedit/virtual-block-2.gif" class="">
+
+ <a id="more"></a>
+<h1 id="什麼是-virutaledit"><a href="#什麼是-virutaledit" class="headerlink" title="什麼是 virutaledit"></a>什麼是 virutaledit</h1><p>在 vim 裡預設行為：游標無法放在沒有字元的地方，也就是 <code>set virtualedit=</code>。<br>所以 <code>set virtualedit=block</code> 指的是在 block mode 裡 (也就是 ctrl + v) 可以將游標移到沒有字元的位置</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><code>:help virtualedit</code></li>
+</ul>
+]]></content>
+      <tags>
+        <tag>vim</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>誰說不能在 vim 裡編譯，從 :make 到 :Make</title>
+    <url>/2020/09/10/vim-make/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>回想一下，上一次使用 vim 寫 code 到一個段落要編譯時，你是怎麼做的。</p>
+<p>我看到大多數人的方式，就是將 terminal 切成兩塊，一塊寫 code，一塊編譯，若編譯有錯誤，再移動到寫 code 區塊更改。<br>如果使用此方法，當專案有規模時，編譯錯誤一百條，看了編譯錯誤在哪之後，再將編譯錯誤的位置，從專案裡找出來，反覆來回 100 次，直到修正完畢。<br>本文以 C 語言專案為例 (當然不是只有 C 語言才能這樣子幹，可看 Q&amp;A)，聊聊強大的 vim 在這種情境下有什麼好的解決方案。</p>
+<img data-src="/2020/09/10/vim-make/tmux_split.png" class="">
+ <a id="more"></a>
+
+
+<h1 id="強大的-make"><a href="#強大的-make" class="headerlink" title="強大的 :make"></a>強大的 <code>:make</code></h1><h2 id="基本款"><a href="#基本款" class="headerlink" title="基本款"></a>基本款</h2><p>此次範例就拿 neovim 來編譯好了，根據官方文件要這樣編譯 <code>make CMAKE_BUILD_TYPE=Release</code>，所以在我在 vim 裡這樣編 <code>:make CMAKE_BUILD_TYPE=Release</code></p>
+<p>看起來噴了一點錯誤，案了 <code>enter</code> 似乎之後什麼事都沒發生，回到平常。</p>
+<img data-src="/2020/09/10/vim-make/make_cmd.png" class="">
+
+<p>用 <code>:cl</code> 指令，喔幹!不是一點錯誤，是一堆錯誤，沒列出來根本不知道。</p>
+<img data-src="/2020/09/10/vim-make/clist_cmd.png" class="">
+
+<p>重點來了!! 可以使用 <code>:cn</code> (<code>:cnext</code>) 跳到下一個錯誤位置，<code>:cp</code> (<code>:cprevious</code>) 跳轉到上一個錯誤位置，就不需要自己手動一個一個錯誤找出來。<br>看上圖，可以觀察到，每一條錯誤前面都有一個數字，如果想要跳到特定錯誤去修那就使用 <code>:cc [number]</code>，跳轉到第一個錯誤就用 <code>:cc 12</code>，跳轉到第三個錯誤就用 <code>:cc 19</code>。</p>
+<p>火力展示:</p>
+<img data-src="/2020/09/10/vim-make/clist_demo.gif" class="">
+
+<p>總結一下指令:</p>
+<ul>
+<li><code>:make</code>: 執行 makefile</li>
+<li><code>:cl</code>: 列出所有錯誤</li>
+<li><code>:cn</code>: 跳到下個錯誤</li>
+<li><code>:cp</code>: 跳到上個錯誤</li>
+<li><code>:cc [number]</code>: 跳轉到特定錯誤</li>
+</ul>
+<h2 id="如虎添翼的-quickfix-window"><a href="#如虎添翼的-quickfix-window" class="headerlink" title="如虎添翼的 quickfix-window"></a>如虎添翼的 quickfix-window</h2><p>編譯完之後，除了用 <code>:cl</code> 查看，另一種方式就是用 <code>:copen</code>，打下此指令之後，將會彈出 quickfix-window，列出的錯誤其實就是 <code>:clist</code> 的詳細版本， quickfix-window 只是提供了一種查找的方式。</p>
+<img data-src="/2020/09/10/vim-make/copen_cmd.png" class="">
+<p>移轉到 quickfix-window 後，移動到想要查看的錯誤，案 <code>enter</code> 即可跳轉到該錯誤位置，當然也能配合 <code>:cn</code>, <code>:cp</code>, <code>:cc [number]</code>，quickfix-window 會配合這些指令連動顯示目前位置。</p>
+<p>Note: 詳見 <code>:help quickfix-window</code></p>
+<h1 id="讓你飛起來的-vim-dispatch"><a href="#讓你飛起來的-vim-dispatch" class="headerlink" title="讓你飛起來的 vim-dispatch"></a>讓你飛起來的 vim-dispatch</h1><p>使用 vim 內建的 <code>:make</code> 指令，在編譯時其實是會 block 整個 vim 的，若專案夠大編譯很久，那段時間什麼都不能做，只能看著他編譯，vim-dispatch 完美解決了這個問題。</p>
+<p>安裝:</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">Plug <span class="string">'tpope/vim-dispatch'</span></span><br></pre></td></tr></table></figure>
+
+<p>其實 vim-dispatch 用法很簡單，<code>:Make</code> 編譯，<code>:Copen</code> 打開 quickfix-window，當然也能配合剛剛所提到的跳轉指令使用，幾乎完美配合 vim 的使用習慣。</p>
+<p>當然 vim-dispatch 不只這樣而已，其他功能不在本篇範圍，詳情請見 vim-dispatch 的文件。</p>
+<p>火力展示，可以看到上方的視窗可以移動 cursor，下方則繼續編譯:</p>
+<img data-src="/2020/09/10/vim-make/Make_demo.gif" class="">
+
+<h1 id="Q-amp-A"><a href="#Q-amp-A" class="headerlink" title="Q &amp; A"></a>Q &amp; A</h1><h2 id="vim-使用-make-指令，那不是只有寫-Makefile-才能用嗎"><a href="#vim-使用-make-指令，那不是只有寫-Makefile-才能用嗎" class="headerlink" title="vim 使用 :make 指令，那不是只有寫 Makefile 才能用嗎?"></a>vim 使用 <code>:make</code> 指令，那不是只有寫 Makefile 才能用嗎?</h2><p>當然在想在其他語言使用 <code>:make</code> 指令，達到一樣效果就要編寫客製化的 plugin 了，當然很受歡迎的語言都有人寫好啦，通常都是包在語言 plugin 裡：</p>
+<ul>
+<li><a href="https://github.com/rust-lang/rust.vim" target="_blank" rel="noopener">rust.vim</a>: 原本編譯方式是 <code>cargo build</code>，在 vim 裡變成 <code>:make build</code> 就好，以此類推可以 <code>:make run</code></li>
+<li><a href="https://github.com/fatih/vim-go" target="_blank" rel="noopener">vim-go</a>:在 vim-go 可以使用 <code>:GoBuild</code>, <code>:GoRun</code></li>
+</ul>
+<h1 id="結語"><a href="#結語" class="headerlink" title="結語"></a>結語</h1><p>vim 是一個古老的編輯器，某些特色和 C 語言沾上關係，比如說 make 指令 (或許當年 C 語言獨佔天下!?)，當然 vim 不只可以使用 make 這種自動化編譯，vim 也開放了幾個 api 使得再起他語言也能達成一樣的效果 (詳見 <code>:help makeprg</code>)，在專案愈大時愈能顯現其效果，當年我也是碰了一點 linux kernel，才學習到這個技巧，加速了不少開發速度。</p>
+<p>如果有什麼相關技巧，歡迎在底下留言交流。</p>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://www.ptt.cc/bbs/Editor/M.1285722960.A.BF5.html" target="_blank" rel="noopener">Re: [轉錄][問題] VIM 編譯與執行</a></li>
+<li>vim help doc</li>
+</ul>
+]]></content>
+      <tags>
+        <tag>vim</tag>
       </tags>
   </entry>
   <entry>
